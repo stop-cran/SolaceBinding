@@ -8,8 +8,8 @@
     <ProjectGuid>{E7388BB9-1925-44FC-BC2F-E313BE3904A4}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>JsonRpcOverTcp.ServiceModel</RootNamespace>
-    <AssemblyName>JsonRpcOverTcp.ServiceModel</AssemblyName>
+    <RootNamespace>Solace.ServiceModel</RootNamespace>
+    <AssemblyName>Solace.ServiceModel</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -31,8 +31,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Newtonsoft.Json">
-      <HintPath>..\lib\Newtonsoft.Json.dll</HintPath>
+    <Reference Include="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.9.0.1\lib\net40\Newtonsoft.Json.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -45,14 +46,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="JsonRpcErrorHandler.cs" />
-    <Compile Include="JsonRpcMessageInspector.cs" />
-    <Compile Include="JsonRpcConstants.cs" />
-    <Compile Include="JsonRpcEndpointBehavior.cs" />
-    <Compile Include="JsonRpcException.cs" />
-    <Compile Include="JsonRpcHelpers.cs" />
-    <Compile Include="JsonRpcMessageFormatter.cs" />
-    <Compile Include="JsonRpcOperationSelector.cs" />
+    <Compile Include="SolaceErrorHandler.cs" />
+    <Compile Include="SolaceMessageInspector.cs" />
+    <Compile Include="SolaceConstants.cs" />
+    <Compile Include="SolaceEndpointBehavior.cs" />
+    <Compile Include="SolaceException.cs" />
+    <Compile Include="SolaceHelpers.cs" />
+    <Compile Include="SolaceMessageFormatter.cs" />
+    <Compile Include="SolaceOperationSelector.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -60,6 +61,9 @@
       <Project>{69A716E4-31E4-4758-9398-4055436D67F4}</Project>
       <Name>Utils</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
