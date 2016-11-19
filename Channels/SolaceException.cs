@@ -1,7 +1,7 @@
 ﻿using System;
 using Newtonsoft.Json.Linq;
 
-namespace Solace.ServiceModel
+namespace Solace.Channels
 {
     public class SolaceException : Exception
     {

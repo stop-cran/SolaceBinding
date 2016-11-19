@@ -3,7 +3,7 @@ using System.ServiceModel.Channels;
 using System.ServiceModel;
 using Newtonsoft.Json.Linq;
 
-namespace Solace.ServiceModel
+namespace Solace.Channels
 {
     class SolaceMessageInspector : IClientMessageInspector, IDispatchMessageInspector
     {

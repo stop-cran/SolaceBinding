@@ -3,7 +3,7 @@ using System.Xml;
 
 namespace Solace.Utils
 {
-    public class RawBodyWriter : BodyWriter
+    class RawBodyWriter : BodyWriter
     {
         byte[] bytes;
         public RawBodyWriter(byte[] bytes)

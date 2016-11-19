@@ -3,7 +3,7 @@ using System.ServiceModel.Dispatcher;
 using System.ServiceModel.Channels;
 using Newtonsoft.Json.Linq;
 
-namespace Solace.ServiceModel
+namespace Solace.Channels
 {
     class SolaceErrorHandler : IErrorHandler
     {

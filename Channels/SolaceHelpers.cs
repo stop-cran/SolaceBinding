@@ -10,7 +10,7 @@ using Newtonsoft.Json;
 using Solace.Utils;
 using System.Xml;
 
-namespace Solace.ServiceModel
+namespace Solace.Channels
 {
     static class SolaceHelpers
     {

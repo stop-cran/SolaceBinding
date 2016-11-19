@@ -6,7 +6,7 @@ using System;
 
 namespace Solace.Channels
 {
-    public class SolaceEndpoint : IDisposable
+    class SolaceEndpoint : IDisposable
     {
         IContext context;
         ISession session;

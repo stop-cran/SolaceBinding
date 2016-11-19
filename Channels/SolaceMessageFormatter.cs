@@ -6,7 +6,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 
-namespace Solace.ServiceModel
+namespace Solace.Channels
 {
     class SolaceMessageFormatter : IClientMessageFormatter, IDispatchMessageFormatter
     {

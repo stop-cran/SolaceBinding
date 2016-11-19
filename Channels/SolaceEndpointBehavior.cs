@@ -6,7 +6,7 @@ using System.ServiceModel.Description;
 using System.ServiceModel.Channels;
 using System.ServiceModel.Dispatcher;
 
-namespace Solace.ServiceModel
+namespace Solace.Channels
 {
     public class SolaceEndpointBehavior : IEndpointBehavior
     {
