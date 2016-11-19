@@ -1,22 +1,28 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.ServiceModel.Channels;
+using System.Threading.Tasks;
+using SolaceSystems.Solclient.Messaging;
 
-namespace JsonRpcOverTcp.Channels
+namespace Solace.Channels
 {
-    class SizedTcpRequestContext : RequestContext
+    class SolaceRequestContext : RequestContext
     {
-        SizedTcpReplyChannel replyChannel;
+        SolaceReplyChannel replyChannel;
         Message requestMessage;
+        IDestination replyTo;
+        string correlationId;
         TimeSpan timeout;
 
-        public SizedTcpRequestContext(SizedTcpReplyChannel replyChannel, Message requestMessage, TimeSpan timeout)
+        public SolaceRequestContext(SolaceReplyChannel replyChannel, Message requestMessage, TimeSpan timeout)
         {
             this.replyChannel = replyChannel;
             this.requestMessage = requestMessage;
             this.timeout = timeout;
+
+            var solaceRequest = (IMessage)requestMessage.Properties["SolaceRequest"];
+
+            replyTo = solaceRequest.ReplyTo;
+            correlationId = solaceRequest.CorrelationId;
         }
 
         public override void Abort()
@@ -26,12 +32,12 @@ namespace JsonRpcOverTcp.Channels
 
         public override IAsyncResult BeginReply(Message message, TimeSpan timeout, AsyncCallback callback, object state)
         {
-            return this.replyChannel.BeginSendMessage(message, timeout, callback, state);
+            return TaskHelper.CreateTask(() => this.replyChannel.Send(replyTo, correlationId, message, timeout), callback, state);
         }
 
         public override IAsyncResult BeginReply(Message message, AsyncCallback callback, object state)
         {
-            return this.replyChannel.BeginSendMessage(message, callback, state);
+            return TaskHelper.CreateTask(() => this.replyChannel.Send(replyTo, correlationId, message, timeout), callback, state);
         }
 
         public override void Close(TimeSpan timeout)
@@ -46,17 +52,17 @@ namespace JsonRpcOverTcp.Channels
 
         public override void EndReply(IAsyncResult result)
         {
-            this.replyChannel.EndSendMessage(result);
+            ((Task)result).Wait();
         }
 
         public override void Reply(Message message, TimeSpan timeout)
         {
-            this.replyChannel.SendMessage(message, timeout);
+            this.replyChannel.Send(replyTo, correlationId, message, timeout);
         }
 
         public override void Reply(Message message)
         {
-            this.replyChannel.SendMessage(message, this.timeout);
+            this.replyChannel.Send(replyTo, correlationId, message, timeout);
         }
 
         public override Message RequestMessage

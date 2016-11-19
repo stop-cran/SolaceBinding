@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Net;
 using System.Net.Sockets;
-using JsonRpcOverTcp.Utils;
+using Solace.Utils;
 
-namespace JsonRpcOverTcp.SimpleServer
+namespace Solace.SimpleServer
 {
     public class SocketsServer
     {

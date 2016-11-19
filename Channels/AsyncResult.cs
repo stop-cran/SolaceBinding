@@ -2,7 +2,7 @@
 using System.Diagnostics;
 using System.Threading;
 
-namespace JsonRpcOverTcp.Channels
+namespace Solace.Channels
 {
     /// <summary>
     /// A generic base class for IAsyncResult implementations

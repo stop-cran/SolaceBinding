@@ -7,12 +7,12 @@ using System.ServiceModel.Channels;
 using Newtonsoft.Json.Linq;
 using System.IO;
 using Newtonsoft.Json;
-using JsonRpcOverTcp.Utils;
+using Solace.Utils;
 using System.Xml;
 
-namespace JsonRpcOverTcp.ServiceModel
+namespace Solace.ServiceModel
 {
-    static class JsonRpcHelpers
+    static class SolaceHelpers
     {
         public static bool IsUntypedMessage(OperationDescription operation)
         {
@@ -35,9 +35,9 @@ namespace JsonRpcOverTcp.ServiceModel
         public static JObject GetJObjectPreservingMessage(ref Message message)
         {
             JObject json;
-            if (message.Properties.ContainsKey(JsonRpcConstants.JObjectMessageProperty))
+            if (message.Properties.ContainsKey(SolaceConstants.JObjectMessageProperty))
             {
-                json = (JObject)message.Properties[JsonRpcConstants.JObjectMessageProperty];
+                json = (JObject)message.Properties[SolaceConstants.JObjectMessageProperty];
             }
             else
             {
@@ -48,7 +48,7 @@ namespace JsonRpcOverTcp.ServiceModel
             return json;
         }
 
-        public static Message SerializeMessage(JObject json, Message previousMessage)
+        public static Message SerializeMessage(JToken json, Message previousMessage)
         {
             using (MemoryStream ms = new MemoryStream())
             {
@@ -67,7 +67,7 @@ namespace JsonRpcOverTcp.ServiceModel
                             previousMessage.Close();
                         }
 
-                        result.Properties[JsonRpcConstants.JObjectMessageProperty] = json;
+                        result.Properties[SolaceConstants.JObjectMessageProperty] = json;
                         return result;
                     }
                 }
@@ -76,9 +76,9 @@ namespace JsonRpcOverTcp.ServiceModel
 
         public static JObject DeserializeMessage(Message message)
         {
-            if (message.Properties.ContainsKey(JsonRpcConstants.JObjectMessageProperty))
+            if (message.Properties.ContainsKey(SolaceConstants.JObjectMessageProperty))
             {
-                return (JObject)message.Properties[JsonRpcConstants.JObjectMessageProperty];
+                return (JObject)message.Properties[SolaceConstants.JObjectMessageProperty];
             }
             else
             {

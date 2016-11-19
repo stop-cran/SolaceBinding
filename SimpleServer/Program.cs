@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace JsonRpcOverTcp.SimpleServer
+namespace Solace.SimpleServer
 {
     public class CalculatorService
     {

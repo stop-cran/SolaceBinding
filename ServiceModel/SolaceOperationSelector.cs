@@ -6,14 +6,13 @@ using System.ServiceModel.Dispatcher;
 using System.ServiceModel.Channels;
 using Newtonsoft.Json.Linq;
 
-namespace JsonRpcOverTcp.ServiceModel
+namespace Solace.ServiceModel
 {
-    class JsonRpcOperationSelector : IDispatchOperationSelector
+    class SolaceOperationSelector : IDispatchOperationSelector
     {
         public string SelectOperation(ref Message message)
         {
-            JObject json = JsonRpcHelpers.GetJObjectPreservingMessage(ref message);
-            return json[JsonRpcConstants.MethodKey].Value<string>();
+            return (string)message.Properties["ApplicationMessageType"];
         }
     }
 }

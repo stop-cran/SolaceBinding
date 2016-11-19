@@ -1,7 +1,7 @@
 ﻿using System.ServiceModel.Channels;
 using System.Xml;
 
-namespace JsonRpcOverTcp.Utils
+namespace Solace.Utils
 {
     public class RawBodyWriter : BodyWriter
     {

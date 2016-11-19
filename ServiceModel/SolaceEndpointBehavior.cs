@@ -6,9 +6,9 @@ using System.ServiceModel.Description;
 using System.ServiceModel.Channels;
 using System.ServiceModel.Dispatcher;
 
-namespace JsonRpcOverTcp.ServiceModel
+namespace Solace.ServiceModel
 {
-    public class JsonRpcEndpointBehavior : IEndpointBehavior
+    public class SolaceEndpointBehavior : IEndpointBehavior
     {
         public void AddBindingParameters(ServiceEndpoint endpoint, BindingParameterCollection bindingParameters)
         {
@@ -16,33 +16,33 @@ namespace JsonRpcOverTcp.ServiceModel
 
         public void ApplyClientBehavior(ServiceEndpoint endpoint, ClientRuntime clientRuntime)
         {
-            clientRuntime.MessageInspectors.Add(new JsonRpcMessageInspector());
+            clientRuntime.MessageInspectors.Add(new SolaceMessageInspector());
             foreach (OperationDescription operation in endpoint.Contract.Operations)
             {
-                if (!JsonRpcHelpers.IsUntypedMessage(operation))
+                if (!SolaceHelpers.IsUntypedMessage(operation))
                 {
                     ClientOperation clientOperation = clientRuntime.Operations[operation.Name];
                     clientOperation.SerializeRequest = true;
                     clientOperation.DeserializeReply = true;
-                    clientOperation.Formatter = new JsonRpcMessageFormatter(operation);
+                    clientOperation.Formatter = new SolaceMessageFormatter(operation);
                 }
             }
         }
 
         public void ApplyDispatchBehavior(ServiceEndpoint endpoint, EndpointDispatcher endpointDispatcher)
         {
-            endpointDispatcher.DispatchRuntime.MessageInspectors.Add(new JsonRpcMessageInspector());
-            endpointDispatcher.DispatchRuntime.OperationSelector = new JsonRpcOperationSelector();
-            endpointDispatcher.ChannelDispatcher.ErrorHandlers.Add(new JsonRpcErrorHandler());
+            endpointDispatcher.DispatchRuntime.MessageInspectors.Add(new SolaceMessageInspector());
+            endpointDispatcher.DispatchRuntime.OperationSelector = new SolaceOperationSelector();
+            endpointDispatcher.ChannelDispatcher.ErrorHandlers.Add(new SolaceErrorHandler());
             endpointDispatcher.ContractFilter = new MatchAllMessageFilter();
             foreach (OperationDescription operation in endpoint.Contract.Operations)
             {
-                if (!JsonRpcHelpers.IsUntypedMessage(operation))
+                if (!SolaceHelpers.IsUntypedMessage(operation))
                 {
                     DispatchOperation dispatchOperation = endpointDispatcher.DispatchRuntime.Operations[operation.Name];
                     dispatchOperation.DeserializeRequest = true;
                     dispatchOperation.SerializeReply = true;
-                    dispatchOperation.Formatter = new JsonRpcMessageFormatter(operation);
+                    dispatchOperation.Formatter = new SolaceMessageFormatter(operation);
                 }
             }
         }

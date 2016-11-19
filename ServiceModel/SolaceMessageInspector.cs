@@ -1,50 +1,40 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.ServiceModel.Dispatcher;
+﻿using System.ServiceModel.Dispatcher;
 using System.ServiceModel.Channels;
 using System.ServiceModel;
 using Newtonsoft.Json.Linq;
 
-namespace JsonRpcOverTcp.ServiceModel
+namespace Solace.ServiceModel
 {
-    class JsonRpcMessageInspector : IClientMessageInspector, IDispatchMessageInspector
+    class SolaceMessageInspector : IClientMessageInspector, IDispatchMessageInspector
     {
         public void AfterReceiveReply(ref Message reply, object correlationState)
         {
-            JObject json = JsonRpcHelpers.GetJObjectPreservingMessage(ref reply);
-            int replyId = json[JsonRpcConstants.IdKey].Value<int>();
-            int requestId = (int)correlationState;
-            if (replyId != requestId)
+            JObject json = SolaceHelpers.GetJObjectPreservingMessage(ref reply);
+            string replyId = (string)reply.Properties["CorrelationId"];
+            if (replyId != (string)correlationState)
             {
-                throw new JsonRpcException("id mismatch", "Reply does not correspond to the request!");
+                throw new SolaceException("id mismatch", "Reply does not correspond to the request!");
             }
 
-            if (json[JsonRpcConstants.ErrorKey].Type != JTokenType.Null)
-            {
-                throw new JsonRpcException(json[JsonRpcConstants.ErrorKey]);
-            }
+            var error = json[SolaceConstants.ErrorKey];
+
+            if (error.Type != JTokenType.Null)
+                throw new SolaceException(error);
         }
 
         public object BeforeSendRequest(ref Message request, IClientChannel channel)
         {
-            JObject json = JsonRpcHelpers.GetJObjectPreservingMessage(ref request);
-            return json[JsonRpcConstants.IdKey].Value<int>();
+            return request.Properties["CorrelationId"];
         }
 
         public object AfterReceiveRequest(ref Message request, IClientChannel channel, InstanceContext instanceContext)
         {
-            JObject json = JsonRpcHelpers.GetJObjectPreservingMessage(ref request);
-            int requestId = json[JsonRpcConstants.IdKey].Value<int>();
-            return requestId;
+            return request.Properties["CorrelationId"];
         }
 
         public void BeforeSendReply(ref Message reply, object correlationState)
         {
-            JObject json = JsonRpcHelpers.GetJObjectPreservingMessage(ref reply);
-            json[JsonRpcConstants.IdKey] = (int)correlationState;
-            reply = JsonRpcHelpers.SerializeMessage(json, reply);
+            reply.Properties["CorrelationId"] = correlationState;
         }
     }
 }

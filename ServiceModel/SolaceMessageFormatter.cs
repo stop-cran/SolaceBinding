@@ -4,73 +4,101 @@ using System.ServiceModel.Dispatcher;
 using System.Threading;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System;
 
-namespace JsonRpcOverTcp.ServiceModel
+namespace Solace.ServiceModel
 {
-    class JsonRpcMessageFormatter : IClientMessageFormatter, IDispatchMessageFormatter
+    class SolaceMessageFormatter : IClientMessageFormatter, IDispatchMessageFormatter
     {
         private OperationDescription operation;
-        private static int nextId = 0;
+        private static int nextId;
 
-        public JsonRpcMessageFormatter(OperationDescription operation)
+        public SolaceMessageFormatter(OperationDescription operation)
         {
             this.operation = operation;
         }
 
         public object DeserializeReply(Message message, object[] parameters)
         {
-            JObject json = JsonRpcHelpers.DeserializeMessage(message);
-            return JsonConvert.DeserializeObject(
-                json[JsonRpcConstants.ResultKey].ToString(),
+            JObject json = SolaceHelpers.DeserializeMessage(message);
+            return JsonConvert.DeserializeObject(json.ToString(),
                 this.operation.Messages[1].Body.ReturnValue.Type);
         }
 
         public Message SerializeRequest(MessageVersion messageVersion, object[] parameters)
         {
             JObject json = new JObject();
-            json.Add(JsonRpcConstants.MethodKey, this.operation.Name);
-            JArray methodParams = new JArray();
-            json.Add(JsonRpcConstants.ParamsKey, methodParams);
-            for (int i = 0; i < parameters.Length; i++)
-            {
-                methodParams.Add(null);
-            }
+            json.Add(SolaceConstants.MethodKey, this.operation.Name);
 
             foreach (MessagePartDescription part in this.operation.Messages[0].Body.Parts)
             {
                 object paramValue = parameters[part.Index];
+
                 if (paramValue != null)
-                {
-                    methodParams[part.Index] = JToken.FromObject(paramValue);
-                }
+                    json.Add(part.Name, JToken.FromObject(paramValue));
             }
 
-            json.Add(JsonRpcConstants.IdKey, new JValue(Interlocked.Increment(ref nextId)));
-            return JsonRpcHelpers.SerializeMessage(json, null);
+            var message = SolaceHelpers.SerializeMessage(json, null);
+
+            message.Properties["CorrelationId"] = Interlocked.Increment(ref nextId).ToString();
+
+            return message;
         }
 
         public void DeserializeRequest(Message message, object[] parameters)
         {
-            JObject json = JsonRpcHelpers.DeserializeMessage(message);
-            JArray jsonParams = json[JsonRpcConstants.ParamsKey] as JArray;
-            foreach (MessagePartDescription part in this.operation.Messages[0].Body.Parts)
-            {
-                int index = part.Index;
-                if (jsonParams[index].Type != JTokenType.Null)
+            var json = SolaceHelpers.DeserializeMessage(message);
+
+            foreach (var part in operation.Messages[0].Body.Parts)
+                try
                 {
-                    parameters[index] = JsonConvert.DeserializeObject(
-                        jsonParams[index].ToString(),
-                        part.Type);
+                    int index = part.Index;
+
+                    JToken value;
+
+                    if (json.TryGetValue(part.Name, out value))
+                        parameters[index] = DeserializeParameterValue(part, value);
+                    else
+                    {
+                        object property;
+
+                        if (message.Properties.TryGetValue(part.Name, out property))
+                            parameters[index] = property;
+                        else
+                            throw new ArgumentException("Required parameter was not provided.", part.Name);
+                    }
                 }
+                catch (ArgumentException ex) when (ex.ParamName == part.Name)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    throw new ArgumentException("Error retrieving parameter value", part.Name, ex);
+                }
+        }
+
+        private static object DeserializeParameterValue(MessagePartDescription part, JToken value)
+        {
+            switch (value.Type)
+            {
+                case JTokenType.Object:
+                case JTokenType.Array:
+                    return JsonConvert.DeserializeObject(
+                        value.ToString(), part.Type);
+                case JTokenType.None:
+                case JTokenType.Null:
+                    if (part.Type.IsValueType)
+                        throw new ArgumentException("Required parameter was not provided.", part.Name);
+                    return null;
+                default:
+                    return Convert.ChangeType(((JValue)value).Value, part.Type);
             }
         }
 
         public Message SerializeReply(MessageVersion messageVersion, object[] parameters, object result)
         {
-            JObject json = new JObject();
-            json[JsonRpcConstants.ErrorKey] = null;
-            json[JsonRpcConstants.ResultKey] = JToken.FromObject(result);
-            return JsonRpcHelpers.SerializeMessage(json, null);
+            return SolaceHelpers.SerializeMessage(result == null ? JValue.CreateNull() : JToken.FromObject(result), null);
         }
     }
 }

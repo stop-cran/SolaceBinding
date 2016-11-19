@@ -1,14 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.ServiceModel.Dispatcher;
 using System.ServiceModel.Channels;
 using Newtonsoft.Json.Linq;
 
-namespace JsonRpcOverTcp.ServiceModel
+namespace Solace.ServiceModel
 {
-    class JsonRpcErrorHandler : IErrorHandler
+    class SolaceErrorHandler : IErrorHandler
     {
         public bool HandleError(Exception error)
         {
@@ -17,12 +14,16 @@ namespace JsonRpcOverTcp.ServiceModel
 
         public void ProvideFault(Exception error, MessageVersion version, ref Message fault)
         {
+            fault = SolaceHelpers.SerializeMessage(EncodeError(error), fault);
+        }
+
+        public static JObject EncodeError(Exception error)
+        {
             JObject json = new JObject();
-            json.Add(JsonRpcConstants.ResultKey, null);
-            JsonRpcException jsonException = error as JsonRpcException;
+            SolaceException jsonException = error as SolaceException;
             if (jsonException != null)
             {
-                json.Add(JsonRpcConstants.ErrorKey, jsonException.JsonException);
+                json.Add(SolaceConstants.ErrorKey, jsonException.JsonException);
             }
             else
             {
@@ -44,10 +45,10 @@ namespace JsonRpcOverTcp.ServiceModel
                     temp = innerJson;
                 }
 
-                json.Add(JsonRpcConstants.ErrorKey, exceptionJson);
+                json.Add(SolaceConstants.ErrorKey, exceptionJson);
             }
 
-            fault = JsonRpcHelpers.SerializeMessage(json, fault);
+            return json;
         }
     }
 }

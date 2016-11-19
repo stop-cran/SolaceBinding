@@ -3,15 +3,21 @@ using System.Collections.ObjectModel;
 using System.ServiceModel;
 using System.ServiceModel.Channels;
 
-namespace JsonRpcOverTcp.Channels
+namespace Solace.Channels
 {
-    class SizedTcpChannelFactory : ChannelFactoryBase<IRequestChannel>
+    class SolaceChannelFactory : ChannelFactoryBase<IRequestChannel>
     {
         BufferManager bufferManager;
         MessageEncoderFactory encoderFactory;
-        public SizedTcpChannelFactory(SizedTcpTransportBindingElement bindingElement, BindingContext context)
+        string vpn, user, password;
+
+        public SolaceChannelFactory(SolaceTransportBindingElement bindingElement, BindingContext context)
             : base(context.Binding)
         {
+            vpn = bindingElement.VPN;
+            user = bindingElement.UserName;
+            password = bindingElement.Password;
+
             // populate members from binding element
             int maxBufferSize = (int)bindingElement.MaxReceivedMessageSize;
             this.bufferManager = BufferManager.CreateBufferManager(bindingElement.MaxBufferPoolSize, maxBufferSize);
@@ -40,12 +46,13 @@ namespace JsonRpcOverTcp.Channels
 
         protected override IRequestChannel OnCreateChannel(EndpointAddress address, Uri via)
         {
-            return new SizedTcpRequestChannel(
+            return new SolaceRequestChannel(
                 this.encoderFactory.Encoder, 
                 this.bufferManager, 
                 this, 
                 address, 
-                via);
+                via,
+                vpn, user, password);
         }
 
         protected override IAsyncResult OnBeginOpen(TimeSpan timeout, AsyncCallback callback, object state)
