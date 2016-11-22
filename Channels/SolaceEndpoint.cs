@@ -77,7 +77,7 @@ namespace Solace.Channels
             session.Subscribe(topic, true).EnsureSuccess();
         }
 
-        public void SendReply(IDestination destination, string correlationId, byte[] buffer)
+        public void SendReply(IDestination destination, string correlationId, string applicationMessageType, byte[] buffer)
         {
             if (buffer != null)
             {
@@ -89,12 +89,13 @@ namespace Solace.Channels
 
                 message.ApplicationMessageType = "WTS.01.v1";
                 message.BinaryAttachment = buffer;
+                message.ApplicationMessageType = applicationMessageType;
 
                 session.SendReply(request, message).EnsureSuccess();
             }
         }
 
-        public byte[] SendRequest(byte[] buffer, string applicationMessageType, TimeSpan timeout)
+        public IMessage SendRequest(byte[] buffer, string applicationMessageType, TimeSpan timeout)
         {
             var message = session.CreateMessage();
 
@@ -106,12 +107,12 @@ namespace Solace.Channels
 
             session.SendRequest(message, out reply, (int)timeout.TotalMilliseconds).EnsureSuccess();
 
-            return reply.BinaryAttachment;
+            return reply;
         }
 
-        public void SendReply(IDestination destination, string correlationId, ArraySegment<byte> buffer)
+        public void SendReply(IDestination destination, string correlationId, string applicationMessageType, ArraySegment<byte> buffer)
         {
-            SendReply(destination, correlationId, Copy(buffer));
+            SendReply(destination, correlationId, applicationMessageType, Copy(buffer));
         }
 
         private static byte[] Copy(ArraySegment<byte> buffer)
@@ -129,7 +130,7 @@ namespace Solace.Channels
             return attachment;
         }
 
-        public byte[] SendRequest(ArraySegment<byte> buffer, string applicationMessageType, TimeSpan timeout)
+        public IMessage SendRequest(ArraySegment<byte> buffer, string applicationMessageType, TimeSpan timeout)
         {
             return SendRequest(Copy(buffer), applicationMessageType, timeout);
         }

@@ -44,8 +44,7 @@ namespace Solace.Channels
 
         public Message Request(Message message, TimeSpan timeout)
         {
-            base.SendMessage(message, timeout);
-            return base.ReceiveMessage(timeout);
+            return base.SendRequestMessage(message, timeout);
         }
 
         public Message Request(Message message)

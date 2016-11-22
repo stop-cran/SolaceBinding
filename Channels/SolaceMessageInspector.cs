@@ -10,31 +10,33 @@ namespace Solace.Channels
         public void AfterReceiveReply(ref Message reply, object correlationState)
         {
             JObject json = SolaceHelpers.GetJObjectPreservingMessage(ref reply);
-            string replyId = (string)reply.Properties["CorrelationId"];
-            if (replyId != (string)correlationState)
+            string replyId = (string)reply.Properties[SolaceConstants.CorrelationIdKey];
+            if (!(correlationState is RequestCorrelationState) && replyId != (string)correlationState)
             {
                 throw new SolaceException("id mismatch", "Reply does not correspond to the request!");
             }
 
             var error = json[SolaceConstants.ErrorKey];
 
-            if (error.Type != JTokenType.Null)
+            if (error != null && error.Type != JTokenType.Null)
                 throw new SolaceException(error);
         }
 
         public object BeforeSendRequest(ref Message request, IClientChannel channel)
         {
-            return request.Properties["CorrelationId"];
+            return request.Properties[SolaceConstants.CorrelationIdKey];
         }
 
         public object AfterReceiveRequest(ref Message request, IClientChannel channel, InstanceContext instanceContext)
         {
-            return request.Properties["CorrelationId"];
+            return request.Properties[SolaceConstants.CorrelationIdKey];
         }
 
         public void BeforeSendReply(ref Message reply, object correlationState)
         {
-            reply.Properties["CorrelationId"] = correlationState;
+            if (!reply.Properties.ContainsKey(SolaceConstants.ApplicationMessageTypeKey))
+                reply.Properties[SolaceConstants.ApplicationMessageTypeKey] = "Fault";
+            reply.Properties[SolaceConstants.CorrelationIdKey] = correlationState;
         }
     }
 }

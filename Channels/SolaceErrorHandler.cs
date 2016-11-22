@@ -14,7 +14,10 @@ namespace Solace.Channels
 
         public void ProvideFault(Exception error, MessageVersion version, ref Message fault)
         {
-            fault = SolaceHelpers.SerializeMessage(EncodeError(error), fault);
+            var message = SolaceHelpers.SerializeMessage(EncodeError(error), fault);
+
+            message.Properties[SolaceConstants.ApplicationMessageTypeKey] = "Fault";
+            fault = message;
         }
 
         public static JObject EncodeError(Exception error)

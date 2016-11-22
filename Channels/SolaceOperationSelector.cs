@@ -12,7 +12,7 @@ namespace Solace.Channels
     {
         public string SelectOperation(ref Message message)
         {
-            return (string)message.Properties["ApplicationMessageType"];
+            return (string)message.Properties[SolaceConstants.ApplicationMessageTypeKey];
         }
     }
 }

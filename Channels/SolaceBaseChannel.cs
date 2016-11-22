@@ -32,12 +32,14 @@ namespace Solace.Channels
             this.endpoint = endpoint;
         }
 
-        byte[] SendEncodedMessage(ArraySegment<byte> encodedBytes, string applicationMessageType, TimeSpan timeout)
+        Message SendEncodedMessage(ArraySegment<byte> encodedBytes, string applicationMessageType, TimeSpan timeout)
         {
             base.ThrowIfDisposedOrNotOpen();
             try
             {
-                return endpoint.SendRequest(encodedBytes, applicationMessageType, timeout);
+                var message = endpoint.SendRequest(encodedBytes, applicationMessageType, timeout);
+
+                return DecodeMessage(message);
             }
             finally
             {
@@ -46,12 +48,12 @@ namespace Solace.Channels
             }
         }
 
-        void SendEncodedReplyMessage(IDestination destination, string correlationId, ArraySegment<byte> encodedBytes, TimeSpan timeout)
+        void SendEncodedReplyMessage(IDestination destination, string correlationId, string applicationMessageType, ArraySegment<byte> encodedBytes, TimeSpan timeout)
         {
             base.ThrowIfDisposedOrNotOpen();
             try
             {
-                endpoint.SendReply(destination, correlationId, encodedBytes);
+                endpoint.SendReply(destination, correlationId, applicationMessageType, encodedBytes);
             }
             finally
             {
@@ -62,19 +64,26 @@ namespace Solace.Channels
 
         public void SendMessage(Message message, TimeSpan timeout)
         {
-            SendEncodedMessage(this.EncodeMessage(message), (string)message.Properties["ApplicationMessageType"], timeout);
+            SendEncodedMessage(this.EncodeMessage(message), (string)message.Properties[SolaceConstants.ApplicationMessageTypeKey], timeout);
         }
 
-        internal void Send(IDestination destination, string correlationId, Message reply, TimeSpan timeout)
+        public Message SendRequestMessage(Message message, TimeSpan timeout)
         {
-            SendEncodedReplyMessage(destination, correlationId, this.EncodeMessage(reply), timeout);
+            var applicationMessageType = (string)message.Properties[SolaceConstants.ApplicationMessageTypeKey];
+
+            return SendEncodedMessage(this.EncodeMessage(message), applicationMessageType, timeout);
+        }
+
+        internal void SendReply(IDestination destination, string correlationId, Message reply, TimeSpan timeout)
+        {
+            SendEncodedReplyMessage(destination, correlationId, (string)reply.Properties[SolaceConstants.ApplicationMessageTypeKey], this.EncodeMessage(reply), timeout);
         }
 
         public IAsyncResult BeginSendMessage(Message message, TimeSpan timeout, AsyncCallback callback, object state)
         {
             base.ThrowIfDisposedOrNotOpen();
             var encodedMessage = this.EncodeMessage(message);
-            var applicationMessageType = (string)message.Properties["ApplicationMessageType"];
+            var applicationMessageType = (string)message.Properties[SolaceConstants.ApplicationMessageTypeKey];
 
             return TaskHelper.CreateTask(() => SendEncodedMessage(encodedMessage, applicationMessageType, timeout), callback, state);
         }
@@ -121,7 +130,7 @@ namespace Solace.Channels
                     {"error", new JObject
                         {
                             { "type", typeof(ArgumentException).FullName },
-                            { "message", "error" },
+                            { "message", error },
                         }
                     }
                 }.ToString();
@@ -141,7 +150,8 @@ namespace Solace.Channels
             var request = endpoint.Receive(timeout);
             var res = DecodeMessage(request);
 
-            res.Properties["SolaceRequest"] = request;
+            res.Properties[SolaceConstants.CorrelationIdKey] = request.CorrelationId;
+            res.Properties[SolaceConstants.ReplyToKey] = request.ReplyTo;
 
             return res;
         }
@@ -183,8 +193,8 @@ namespace Solace.Channels
             {
                 var message = this.encoder.ReadMessage(data.ToBuffer(bufferManager), bufferManager);
 
-                message.Properties["ApplicationMessageType"] = data.ApplicationMessageType;
-                message.Properties["CorrelationId"] = data.CorrelationId;
+                message.Properties[SolaceConstants.ApplicationMessageTypeKey] = data.ApplicationMessageType;
+                message.Properties[SolaceConstants.CorrelationIdKey] = data.CorrelationId;
                 message.Properties["SenderId"] = data.SenderId;
 
                 return message;

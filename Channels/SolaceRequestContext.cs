@@ -19,10 +19,8 @@ namespace Solace.Channels
             this.requestMessage = requestMessage;
             this.timeout = timeout;
 
-            var solaceRequest = (IMessage)requestMessage.Properties["SolaceRequest"];
-
-            replyTo = solaceRequest.ReplyTo;
-            correlationId = solaceRequest.CorrelationId;
+            replyTo = (IDestination)requestMessage.Properties[SolaceConstants.ReplyToKey];
+            correlationId = (string)requestMessage.Properties[SolaceConstants.CorrelationIdKey];
         }
 
         public override void Abort()
@@ -32,12 +30,12 @@ namespace Solace.Channels
 
         public override IAsyncResult BeginReply(Message message, TimeSpan timeout, AsyncCallback callback, object state)
         {
-            return TaskHelper.CreateTask(() => this.replyChannel.Send(replyTo, correlationId, message, timeout), callback, state);
+            return TaskHelper.CreateTask(() => this.replyChannel.SendReply(replyTo, correlationId, message, timeout), callback, state);
         }
 
         public override IAsyncResult BeginReply(Message message, AsyncCallback callback, object state)
         {
-            return TaskHelper.CreateTask(() => this.replyChannel.Send(replyTo, correlationId, message, timeout), callback, state);
+            return TaskHelper.CreateTask(() => this.replyChannel.SendReply(replyTo, correlationId, message, timeout), callback, state);
         }
 
         public override void Close(TimeSpan timeout)
@@ -57,12 +55,12 @@ namespace Solace.Channels
 
         public override void Reply(Message message, TimeSpan timeout)
         {
-            this.replyChannel.Send(replyTo, correlationId, message, timeout);
+            this.replyChannel.SendReply(replyTo, correlationId, message, timeout);
         }
 
         public override void Reply(Message message)
         {
-            this.replyChannel.Send(replyTo, correlationId, message, timeout);
+            this.replyChannel.SendReply(replyTo, correlationId, message, timeout);
         }
 
         public override Message RequestMessage

@@ -5,32 +5,60 @@ using System.Threading;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.ServiceModel;
+using SolaceBinding;
+using System.Collections.ObjectModel;
 
 namespace Solace.Channels
 {
     class SolaceMessageFormatter : IClientMessageFormatter, IDispatchMessageFormatter
     {
-        private OperationDescription operation;
-        private static int nextId;
+        private readonly string applicationMessageType;
+        private readonly string replyApplicationMessageType;
+        private readonly ReadOnlyCollection<RequestParameter> operationParameters;
+        private readonly Type returnType;
 
         public SolaceMessageFormatter(OperationDescription operation)
         {
-            this.operation = operation;
+            var replyActionPrefix = operation.DeclaringContract.Namespace + operation.DeclaringContract.Name;
+            var replyAction = operation.Messages[1].Action;
+
+            applicationMessageType = operation.Name;
+            replyApplicationMessageType = replyAction.StartsWith(replyActionPrefix)
+                ? replyAction.Substring(replyActionPrefix.Length).TrimStart('/')
+                : replyAction;
+
+            var properties = new HashSet<string>(from parameter in (operation.TaskMethod ?? operation.SyncMethod).GetParameters()
+                                                 where parameter.GetCustomAttributes(typeof(MessageParameterAttribute), true).Any()
+                                                 select parameter.Name);
+
+            returnType = operation.Messages[1].Body.ReturnValue.Type;
+            operationParameters = operation.Messages[0].Body.Parts
+                .Select(part => new RequestParameter
+                {
+                    Name = part.Name,
+                    Index = part.Index,
+                    Type = part.Type,
+                    IsFromProperty = properties.Contains(part.Name),
+                    IsRequired = properties.Contains(part.Name) ||
+                        part.Type.IsValueType && (!part.Type.IsGenericType || part.Type.GetGenericTypeDefinition() != typeof(Nullable<>))
+                }).ToList()
+                .AsReadOnly();
         }
 
         public object DeserializeReply(Message message, object[] parameters)
         {
             JObject json = SolaceHelpers.DeserializeMessage(message);
-            return JsonConvert.DeserializeObject(json.ToString(),
-                this.operation.Messages[1].Body.ReturnValue.Type);
+            return JsonConvert.DeserializeObject(json.ToString(), returnType);
         }
 
         public Message SerializeRequest(MessageVersion messageVersion, object[] parameters)
         {
-            JObject json = new JObject();
-            json.Add(SolaceConstants.MethodKey, this.operation.Name);
+            var json = new JObject();
 
-            foreach (MessagePartDescription part in this.operation.Messages[0].Body.Parts)
+            foreach (var part in operationParameters)
             {
                 object paramValue = parameters[part.Index];
 
@@ -40,7 +68,8 @@ namespace Solace.Channels
 
             var message = SolaceHelpers.SerializeMessage(json, null);
 
-            message.Properties["CorrelationId"] = Interlocked.Increment(ref nextId).ToString();
+            message.Properties[SolaceConstants.ApplicationMessageTypeKey] = applicationMessageType;
+            message.Properties[SolaceConstants.CorrelationIdKey] = new RequestCorrelationState();
 
             return message;
         }
@@ -49,24 +78,25 @@ namespace Solace.Channels
         {
             var json = SolaceHelpers.DeserializeMessage(message);
 
-            foreach (var part in operation.Messages[0].Body.Parts)
+            foreach (var part in operationParameters)
                 try
                 {
                     int index = part.Index;
 
                     JToken value;
 
-                    if (json.TryGetValue(part.Name, out value))
-                        parameters[index] = DeserializeParameterValue(part, value);
-                    else
+                    if (part.IsFromProperty)
                     {
                         object property;
-
                         if (message.Properties.TryGetValue(part.Name, out property))
                             parameters[index] = property;
                         else
                             throw new ArgumentException("Required parameter was not provided.", part.Name);
                     }
+                    else if (json.TryGetValue(part.Name, out value))
+                        parameters[index] = DeserializeParameterValue(part, value);
+                    else if (part.IsRequired)
+                        throw new ArgumentException("Required parameter was not provided.", part.Name);
                 }
                 catch (ArgumentException ex) when (ex.ParamName == part.Name)
                 {
@@ -78,7 +108,7 @@ namespace Solace.Channels
                 }
         }
 
-        private static object DeserializeParameterValue(MessagePartDescription part, JToken value)
+        private static object DeserializeParameterValue(RequestParameter part, JToken value)
         {
             switch (value.Type)
             {
@@ -98,7 +128,11 @@ namespace Solace.Channels
 
         public Message SerializeReply(MessageVersion messageVersion, object[] parameters, object result)
         {
-            return SolaceHelpers.SerializeMessage(result == null ? JValue.CreateNull() : JToken.FromObject(result), null);
+            var reply = SolaceHelpers.SerializeMessage(result == null ? JValue.CreateNull() : JToken.FromObject(result), null);
+
+            reply.Properties[SolaceConstants.ApplicationMessageTypeKey] = replyApplicationMessageType;
+
+            return reply;
         }
     }
 }
