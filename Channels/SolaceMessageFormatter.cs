@@ -118,11 +118,16 @@ namespace Solace.Channels
                         value.ToString(), part.Type);
                 case JTokenType.None:
                 case JTokenType.Null:
+                case JTokenType.Comment:
                     if (part.Type.IsValueType)
                         throw new ArgumentException("Required parameter was not provided.", part.Name);
                     return null;
+                case JTokenType.String:
+                    return JsonConvert.DeserializeObject($"\"{value}\"", part.Type);
+                case JTokenType.Boolean:
+                    return JsonConvert.DeserializeObject(((JValue)value).Value?.ToString().ToLowerInvariant(), part.Type);
                 default:
-                    return Convert.ChangeType(((JValue)value).Value, part.Type);
+                    return JsonConvert.DeserializeObject(((JValue)value).Value?.ToString(), part.Type);
             }
         }
 
