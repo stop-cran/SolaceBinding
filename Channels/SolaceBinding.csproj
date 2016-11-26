@@ -68,13 +68,26 @@
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
+  <ItemGroup Condition="'$(Platform)'=='x86'">
+    <Reference Include="SolaceSystems.Solclient.Messaging">
+      <HintPath>..\API\SolaceSystems.Solclient.Messaging.dll</HintPath>
+    </Reference>
+    <Content Include="..\API\libsolclient.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup Condition="'$(Platform)'=='x64'">
+    <Reference Include="SolaceSystems.Solclient.Messaging_64">
+      <HintPath>..\API\SolaceSystems.Solclient.Messaging_64.dll</HintPath>
+    </Reference>
+    <Content Include="..\API\libsolclient_64.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
   <ItemGroup>
     <Reference Include="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
       <Private>True</Private>
-    </Reference>
-    <Reference Include="SolaceSystems.Solclient.Messaging_64">
-      <HintPath>..\API\SolaceSystems.Solclient.Messaging_64.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -116,8 +129,7 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>
-    </PostBuildEvent>
+    <PostBuildEvent>copy /b $(TargetPath) $(SolutionDir)nuget\$(PlatformName)\</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

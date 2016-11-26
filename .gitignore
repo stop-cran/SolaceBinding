@@ -2,7 +2,11 @@
 #######################
 *.suo
 *.csproj.user
+*.nupkg
 bin/
 obj/
 ClientBin/
-/packages
+packages/
+x86/
+x64/
+API/

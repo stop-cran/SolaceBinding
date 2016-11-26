@@ -9,14 +9,15 @@ namespace Solace.Channels
     {
         public void AfterReceiveReply(ref Message reply, object correlationState)
         {
-            JObject json = SolaceHelpers.GetJObjectPreservingMessage(ref reply);
+            var json = SolaceHelpers.GetJObjectPreservingMessage(ref reply) as JObject;
             string replyId = (string)reply.Properties[SolaceConstants.CorrelationIdKey];
             if (!(correlationState is RequestCorrelationState) && replyId != (string)correlationState)
             {
                 throw new SolaceException("id mismatch", "Reply does not correspond to the request!");
             }
 
-            var error = json[SolaceConstants.ErrorKey];
+            
+            var error = json?[SolaceConstants.ErrorKey];
 
             if (error != null && error.Type != JTokenType.Null)
                 throw new SolaceException(error);

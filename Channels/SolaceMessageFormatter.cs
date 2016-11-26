@@ -50,8 +50,7 @@ namespace Solace.Channels
 
         public object DeserializeReply(Message message, object[] parameters)
         {
-            JObject json = SolaceHelpers.DeserializeMessage(message);
-            return JsonConvert.DeserializeObject(json.ToString(), returnType);
+            return DeserializeParameterValue(SolaceHelpers.DeserializeMessage(message), returnType);
         }
 
         public Message SerializeRequest(MessageVersion messageVersion, object[] parameters)
@@ -76,7 +75,7 @@ namespace Solace.Channels
 
         public void DeserializeRequest(Message message, object[] parameters)
         {
-            var json = SolaceHelpers.DeserializeMessage(message);
+            var json = (JObject)SolaceHelpers.DeserializeMessage(message);
 
             foreach (var part in operationParameters)
                 try
@@ -94,7 +93,15 @@ namespace Solace.Channels
                             throw new ArgumentException("Required parameter was not provided.", part.Name);
                     }
                     else if (json.TryGetValue(part.Name, out value))
-                        parameters[index] = DeserializeParameterValue(part, value);
+                    {
+                        var v = DeserializeParameterValue(value, part.Type);
+
+                        if (v == null && part.Type.IsValueType)
+                            if (part.Type.IsValueType)
+                                throw new ArgumentException("Required parameter was not provided.", part.Name);
+
+                        parameters[index] = v;
+                    }
                     else if (part.IsRequired)
                         throw new ArgumentException("Required parameter was not provided.", part.Name);
                 }
@@ -108,26 +115,23 @@ namespace Solace.Channels
                 }
         }
 
-        private static object DeserializeParameterValue(RequestParameter part, JToken value)
+        private static object DeserializeParameterValue(JToken value, Type type)
         {
             switch (value.Type)
             {
                 case JTokenType.Object:
                 case JTokenType.Array:
-                    return JsonConvert.DeserializeObject(
-                        value.ToString(), part.Type);
+                    return JsonConvert.DeserializeObject(value.ToString(), type);
                 case JTokenType.None:
                 case JTokenType.Null:
                 case JTokenType.Comment:
-                    if (part.Type.IsValueType)
-                        throw new ArgumentException("Required parameter was not provided.", part.Name);
                     return null;
                 case JTokenType.String:
-                    return JsonConvert.DeserializeObject($"\"{value}\"", part.Type);
+                    return JsonConvert.DeserializeObject($"\"{value}\"", type);
                 case JTokenType.Boolean:
-                    return JsonConvert.DeserializeObject(((JValue)value).Value?.ToString().ToLowerInvariant(), part.Type);
+                    return JsonConvert.DeserializeObject(((JValue)value).Value?.ToString().ToLowerInvariant(), type);
                 default:
-                    return JsonConvert.DeserializeObject(((JValue)value).Value?.ToString(), part.Type);
+                    return JsonConvert.DeserializeObject(((JValue)value).Value?.ToString(), type);
             }
         }
 

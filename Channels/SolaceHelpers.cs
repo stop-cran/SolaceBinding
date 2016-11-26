@@ -29,12 +29,12 @@ namespace Solace.Channels
             }
         }
 
-        public static JObject GetJObjectPreservingMessage(ref Message message)
+        public static JToken GetJObjectPreservingMessage(ref Message message)
         {
-            JObject json;
+            JToken json;
             if (message.Properties.ContainsKey(SolaceConstants.JObjectMessageProperty))
             {
-                json = (JObject)message.Properties[SolaceConstants.JObjectMessageProperty];
+                json = (JToken)message.Properties[SolaceConstants.JObjectMessageProperty];
             }
             else
             {
@@ -71,15 +71,15 @@ namespace Solace.Channels
             }
         }
 
-        public static JObject DeserializeMessage(Message message)
+        public static JToken DeserializeMessage(Message message)
         {
             if (message.Properties.ContainsKey(SolaceConstants.JObjectMessageProperty))
             {
-                return (JObject)message.Properties[SolaceConstants.JObjectMessageProperty];
+                return (JToken)message.Properties[SolaceConstants.JObjectMessageProperty];
             }
             else
             {
-                JObject json = null;
+                JToken json = null;
                 byte[] bytes = null;
                 using (XmlDictionaryReader bodyReader = message.GetReaderAtBodyContents())
                 {
@@ -93,7 +93,7 @@ namespace Solace.Channels
                     {
                         using (JsonTextReader jtr = new JsonTextReader(sr))
                         {
-                            json = JObject.Load(jtr);
+                            json = JToken.Load(jtr);
                         }
                     }
                 }

@@ -13,15 +13,15 @@ namespace Solace.Channels
         Uri uri;
         readonly string vpn, user, password;
 
-        public SolaceChannelListener(SolaceTransportBindingElement bindingElement, BindingContext context, string vpn, string user, string password)
+        public SolaceChannelListener(SolaceTransportBindingElement bindingElement, BindingContext context)
             : base(context.Binding)
         {
             // populate members from binding element
             int maxBufferSize = (int)bindingElement.MaxReceivedMessageSize;
             this.bufferManager = BufferManager.CreateBufferManager(bindingElement.MaxBufferPoolSize, maxBufferSize);
-            this.vpn = vpn;
-            this.user = user;
-            this.password = password;
+            this.vpn = bindingElement.VPN;
+            this.user = bindingElement.UserName;
+            this.password = bindingElement.Password;
 
             Collection<MessageEncodingBindingElement> messageEncoderBindingElements
                 = context.BindingParameters.FindAll<MessageEncodingBindingElement>();

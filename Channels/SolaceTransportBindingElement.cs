@@ -1,4 +1,7 @@
-﻿using System.ServiceModel.Channels;
+﻿using SolaceSystems.Solclient.Messaging;
+using System;
+using System.ServiceModel.Channels;
+using System.Threading;
 
 namespace Solace.Channels
 {
@@ -25,9 +28,16 @@ namespace Solace.Channels
 
         public string Password { get; set; }
 
+        public event EventHandler<SessionEventArgs> SessionEvent;
+
         public override BindingElement Clone()
         {
             return new SolaceTransportBindingElement(this);
+        }
+
+        internal void RaiseSessionEvent(SessionEventArgs args)
+        {
+            Volatile.Read(ref SessionEvent)?.Invoke(this, args);
         }
 
         public override bool CanBuildChannelFactory<TChannel>(BindingContext context)
@@ -47,7 +57,7 @@ namespace Solace.Channels
 
         public override IChannelListener<TChannel> BuildChannelListener<TChannel>(BindingContext context)
         {
-            return (IChannelListener<TChannel>)(object)new SolaceChannelListener(this, context, VPN, UserName, Password);
+            return (IChannelListener<TChannel>)(object)new SolaceChannelListener(this, context);
         }
 
         public override T GetProperty<T>(BindingContext context)
