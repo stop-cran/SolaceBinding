@@ -99,6 +99,7 @@ namespace Solace.Channels
         {
             var message = session.CreateMessage();
 
+            message.SenderId = session.Properties.ClientName;
             message.Destination = topic;
             message.BinaryAttachment = buffer;
             message.ApplicationMessageType = applicationMessageType;
