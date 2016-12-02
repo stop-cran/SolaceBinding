@@ -1,7 +1,8 @@
 ﻿using System;
 using System.ServiceModel.Dispatcher;
 using System.ServiceModel.Channels;
-using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
+using System.IO;
 
 namespace Solace.Channels
 {
@@ -14,44 +15,54 @@ namespace Solace.Channels
 
         public void ProvideFault(Exception error, MessageVersion version, ref Message fault)
         {
-            var message = SolaceHelpers.SerializeMessage(EncodeError(error), fault);
+            var message = SolaceHelpers.SerializeMessage(EncodeError(error));
 
+            if (fault != null)
+            {
+                message.Properties.CopyProperties(fault.Properties);
+                message.Headers.CopyHeadersFrom(fault.Headers);
+                fault.Close();
+            }
             message.Properties[SolaceConstants.ApplicationMessageTypeKey] = "Fault";
             fault = message;
         }
 
-        public static JObject EncodeError(Exception error)
+        static void WriteException(JsonTextWriter writer, Exception ex)
         {
-            JObject json = new JObject();
-            SolaceException jsonException = error as SolaceException;
+            writer.WriteStartObject();
+            writer.WritePropertyName("type");
+            writer.WriteValue(ex.GetType().FullName);
+            writer.WritePropertyName("message");
+            writer.WriteValue(ex.Message);
+
+            var inner = ex.InnerException;
+
+            if (inner != null)
+                WriteException(writer, inner);
+
+            writer.WriteEndObject();
+        }
+
+        public static byte[] EncodeError(Exception error)
+        {
+            var jsonException = error as SolaceException;
+
             if (jsonException != null)
-            {
-                json.Add(SolaceConstants.ErrorKey, jsonException.JsonException);
-            }
+                return System.Text.Encoding.UTF8.GetBytes(jsonException.JsonException.ToString());
             else
-            {
-                JObject exceptionJson = new JObject
+                using (var stream = new MemoryStream())
                 {
-                    { "type", error.GetType().FullName },
-                    { "message", error.Message },
-                };
-                JObject temp = exceptionJson;
-                while (error.InnerException != null)
-                {
-                    error = error.InnerException;
-                    JObject innerJson = new JObject
+                    using (var writer = new StreamWriter(stream))
+                    using (var jsonWriter = new JsonTextWriter(writer))
                     {
-                        { "type", error.GetType().FullName },
-                        { "message", error.Message },
-                    };
-                    temp["inner"] = innerJson;
-                    temp = innerJson;
+                        jsonWriter.WriteStartObject();
+                        jsonWriter.WritePropertyName(SolaceConstants.ErrorKey);
+                        WriteException(jsonWriter, error);
+                        jsonWriter.WriteEndObject();
+                    }
+
+                    return stream.ToArray();
                 }
-
-                json.Add(SolaceConstants.ErrorKey, exceptionJson);
-            }
-
-            return json;
         }
     }
 }

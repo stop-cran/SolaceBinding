@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>SolaceBinding</id>
-    <version>1.0.7</version>
+    <version>1.0.8</version>
     <title>SolaceBinding</title>
     <authors>stop-cran</authors>
     <owners>stop-cran</owners>
@@ -11,7 +11,7 @@
     <iconUrl>http://ICON_URL_HERE_OR_DELETE_THIS_LINE</iconUrl>
     <requireLicenseAcceptance>true</requireLicenseAcceptance>
     <description>Allows to use WCF over Solace messaging platform with JSON message format.</description>
-    <releaseNotes>Added SenderId</releaseNotes>
+    <releaseNotes>Optimized message serialization</releaseNotes>
     <copyright>Copyright © stop-cran, 2016</copyright>
     <tags>WCF Solace Messaging</tags>
   </metadata>

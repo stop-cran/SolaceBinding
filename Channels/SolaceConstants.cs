@@ -6,8 +6,7 @@
         public const string CorrelationIdKey = "CorrelationId";
         public const string ApplicationMessageTypeKey = "ApplicationMessageType";
         public const string ErrorKey = "error";
-        public const string RequestIdMessageProperty = "jsonRpcRequestId";
-        public const string JObjectMessageProperty = "MessageAsJObject";
+        public const string ReplyReaderKey = "ReplyReader";
     }
 
     public class RequestCorrelationState { }

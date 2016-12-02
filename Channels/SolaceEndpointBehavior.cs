@@ -1,15 +1,25 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.ServiceModel.Description;
 using System.ServiceModel.Channels;
 using System.ServiceModel.Dispatcher;
+using Newtonsoft.Json;
 
 namespace Solace.Channels
 {
     public class SolaceEndpointBehavior : IEndpointBehavior
     {
+        readonly Func<JsonSerializerSettings> settingsProvider;
+
+        public SolaceEndpointBehavior()
+        {
+            settingsProvider = JsonConvert.DefaultSettings;
+        }
+
+        public SolaceEndpointBehavior(Func<JsonSerializerSettings> settingsProvider)
+        {
+            this.settingsProvider = settingsProvider;
+        }
+
         public void AddBindingParameters(ServiceEndpoint endpoint, BindingParameterCollection bindingParameters)
         {
         }
@@ -24,7 +34,7 @@ namespace Solace.Channels
                     ClientOperation clientOperation = clientRuntime.Operations[operation.Name];
                     clientOperation.SerializeRequest = true;
                     clientOperation.DeserializeReply = true;
-                    clientOperation.Formatter = new SolaceMessageFormatter(operation);
+                    clientOperation.Formatter = new SolaceMessageFormatter(operation, settingsProvider);
                 }
             }
         }
@@ -42,7 +52,7 @@ namespace Solace.Channels
                     DispatchOperation dispatchOperation = endpointDispatcher.DispatchRuntime.Operations[operation.Name];
                     dispatchOperation.DeserializeRequest = true;
                     dispatchOperation.SerializeReply = true;
-                    dispatchOperation.Formatter = new SolaceMessageFormatter(operation);
+                    dispatchOperation.Formatter = new SolaceMessageFormatter(operation, settingsProvider);
                 }
             }
         }
