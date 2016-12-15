@@ -38,7 +38,10 @@ namespace Solace.Channels
             var inner = ex.InnerException;
 
             if (inner != null)
+            {
+                writer.WritePropertyName("inner");
                 WriteException(writer, inner);
+            }
 
             writer.WriteEndObject();
         }
