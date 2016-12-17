@@ -166,7 +166,7 @@ namespace Solace.Channels
                         if (!reader.Read())
                             throw new JsonReaderException("error reading request");
 
-                        if (v == null && part.Type.IsValueType)
+                        if (v == null && part.IsRequired)
                             throw new ArgumentException("Required parameter was not provided.", part.Name);
 
                         parameters[part.Index] = v;
