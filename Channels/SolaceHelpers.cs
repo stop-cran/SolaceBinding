@@ -32,13 +32,22 @@ namespace Solace.Channels
         {
             object reader;
 
-            if (message.Properties.TryGetValue(SolaceConstants.ReplyReaderKey, out reader))
-                return (JsonTextReader)reader;
+            return message.Properties.TryGetValue(SolaceConstants.ReplyReaderKey, out reader)
+                ? (JsonTextReader)reader
+                : new JsonTextReader(
+                    new StreamReader(
+                        new MemoryStream(ReadMessageBinary(message))))
+                {
+                    CloseInput = true
+                };
+        }
 
+        public static byte[] ReadMessageBinary(Message message)
+        {
             using (var bodyReader = message.GetReaderAtBodyContents())
             {
                 bodyReader.ReadStartElement("Binary");
-                return new JsonTextReader(new StreamReader(new MemoryStream(bodyReader.ReadContentAsBase64()))) { CloseInput = true };
+                return bodyReader.ReadContentAsBase64();
             }
         }
     }

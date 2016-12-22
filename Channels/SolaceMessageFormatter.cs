@@ -6,7 +6,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.ServiceModel;
-using SolaceBinding;
 using System.Collections.ObjectModel;
 using System.IO;
 using Newtonsoft.Json.Linq;
@@ -75,7 +74,7 @@ namespace Solace.Channels
                 if (reader.TokenType == JsonToken.PropertyName && (string)reader.Value == SolaceConstants.ErrorKey)
                 {
                     reader.Read();
-                    throw new SolaceException(JObject.Load(reader));
+                    throw new SolaceJsonException(JObject.Load(reader));
                 }
                 else
                     throw;
@@ -131,12 +130,12 @@ namespace Solace.Channels
             using (var reader = SolaceHelpers.DeserializeMessage(message))
             {
                 if (!reader.Read() || !reader.Read())
-                    throw new SolaceException(null);
+                    throw new JsonReaderException("Error reading the request");
 
                 while (reader.TokenType != JsonToken.EndObject)
                 {
                     if (reader.TokenType != JsonToken.PropertyName)
-                        throw new JsonReaderException("error reading request");
+                        throw new JsonReaderException("Error reading the request");
 
                     var part = operationParameters.FirstOrDefault(x => x.Name == (string)reader.Value);
 
@@ -157,16 +156,16 @@ namespace Solace.Channels
                     }
 
                     if (!reader.Read())
-                        throw new JsonReaderException("error reading request");
+                        throw new JsonReaderException("Error reading the request");
 
                     try
                     {
                         var v = JsonSerializer.Create(settingsProvider()).Deserialize(reader, part.Type);
 
                         if (!reader.Read())
-                            throw new JsonReaderException("error reading request");
+                            throw new JsonReaderException("Error reading the request");
 
-                        if (v == null && part.IsRequired)
+                        if (v == null && part.Type.IsValueType)
                             throw new ArgumentException("Required parameter was not provided.", part.Name);
 
                         parameters[part.Index] = v;

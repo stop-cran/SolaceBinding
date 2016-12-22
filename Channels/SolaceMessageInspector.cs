@@ -10,7 +10,7 @@ namespace Solace.Channels
         {
             if (!(correlationState is RequestCorrelationState) &&
                 (string)reply.Properties[SolaceConstants.CorrelationIdKey] != (string)correlationState)
-                throw new SolaceException("id mismatch", "Reply does not correspond to the request!");
+                throw new SolaceException("Reply does not correspond to the request - correlation id mismatch!");
         }
 
         public object BeforeSendRequest(ref Message request, IClientChannel channel)

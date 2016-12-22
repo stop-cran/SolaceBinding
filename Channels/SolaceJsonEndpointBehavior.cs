@@ -6,16 +6,16 @@ using Newtonsoft.Json;
 
 namespace Solace.Channels
 {
-    public class SolaceEndpointBehavior : IEndpointBehavior
+    public class SolaceJsonEndpointBehavior : IEndpointBehavior
     {
         readonly Func<JsonSerializerSettings> settingsProvider;
 
-        public SolaceEndpointBehavior()
+        public SolaceJsonEndpointBehavior()
         {
             settingsProvider = JsonConvert.DefaultSettings;
         }
 
-        public SolaceEndpointBehavior(Func<JsonSerializerSettings> settingsProvider)
+        public SolaceJsonEndpointBehavior(Func<JsonSerializerSettings> settingsProvider)
         {
             this.settingsProvider = settingsProvider;
         }

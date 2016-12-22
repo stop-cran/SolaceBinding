@@ -1,12 +1,25 @@
 ﻿using System;
 using System.ServiceModel.Dispatcher;
 using System.ServiceModel.Channels;
-using Newtonsoft.Json;
 using System.IO;
+using ProtoBuf;
 
 namespace Solace.Channels
 {
-    class SolaceErrorHandler : IErrorHandler
+    [ProtoContract]
+    public class Error
+    {
+        [ProtoMember(1)]
+        public string type { get; set; }
+
+        [ProtoMember(2)]
+        public string message { get; set; }
+
+        [ProtoMember(3)]
+        public Error inner { get; set; }
+    }
+
+    class SolaceProtobufErrorHandler : IErrorHandler
     {
         public bool HandleError(Exception error)
         {
@@ -27,23 +40,14 @@ namespace Solace.Channels
             fault = message;
         }
 
-        static void WriteException(JsonTextWriter writer, Exception ex)
+        static Error WriteException(Exception ex)
         {
-            writer.WriteStartObject();
-            writer.WritePropertyName("type");
-            writer.WriteValue(ex.GetType().FullName);
-            writer.WritePropertyName("message");
-            writer.WriteValue(ex.Message);
-
-            var inner = ex.InnerException;
-
-            if (inner != null)
+            return ex == null ? null : new Error
             {
-                writer.WritePropertyName("inner");
-                WriteException(writer, inner);
-            }
-
-            writer.WriteEndObject();
+                type = ex.GetType().FullName,
+                message = ex.Message,
+                inner = WriteException(ex.InnerException)
+            };
         }
 
         public static byte[] EncodeError(Exception error)
@@ -55,15 +59,7 @@ namespace Solace.Channels
             else
                 using (var stream = new MemoryStream())
                 {
-                    using (var writer = new StreamWriter(stream))
-                    using (var jsonWriter = new JsonTextWriter(writer))
-                    {
-                        jsonWriter.WriteStartObject();
-                        jsonWriter.WritePropertyName(SolaceConstants.ErrorKey);
-                        WriteException(jsonWriter, error);
-                        jsonWriter.WriteEndObject();
-                    }
-
+                    Serializer.Serialize(stream, WriteException(error));
                     return stream.ToArray();
                 }
         }

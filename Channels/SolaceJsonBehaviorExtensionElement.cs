@@ -4,13 +4,13 @@ using System.ServiceModel.Configuration;
 
 namespace Solace.Channels
 {
-    public class SolaceBehaviorExtensionElement : BehaviorExtensionElement
+    public class SolaceJsonBehaviorExtensionElement : BehaviorExtensionElement
     {
         public override Type BehaviorType
         {
             get
             {
-                return typeof(SolaceEndpointBehavior);
+                return typeof(SolaceJsonEndpointBehavior);
             }
         }
 
@@ -21,7 +21,7 @@ namespace Solace.Channels
 
         protected override object CreateBehavior()
         {
-            return new SolaceEndpointBehavior(GetSerializerSettings);
+            return new SolaceJsonEndpointBehavior(GetSerializerSettings);
         }
     }
 }

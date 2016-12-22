@@ -89,6 +89,10 @@
       <HintPath>..\packages\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="protobuf-net, Version=2.1.0.0, Culture=neutral, PublicKeyToken=257b51d87d2e4d67, processorArchitecture=MSIL">
+      <HintPath>..\packages\protobuf-net.2.1.0\lib\net451\protobuf-net.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
@@ -103,17 +107,24 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AsyncResult.cs" />
+    <Compile Include="IProtobufConverter.cs" />
+    <Compile Include="IValueConverter.cs" />
+    <Compile Include="ProtobufConverterGenerator.cs" />
+    <Compile Include="ProtobufConverterRepository.cs" />
     <Compile Include="RequestParameter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RawBodyWriter.cs" />
     <Compile Include="SolaceBaseChannel.cs" />
-    <Compile Include="SolaceBehaviorExtensionElement.cs" />
+    <Compile Include="SolaceProtobufBehaviorExtensionElement.cs" />
+    <Compile Include="SolaceJsonBehaviorExtensionElement.cs" />
     <Compile Include="SolaceBindingExtensionElement.cs" />
     <Compile Include="SolaceChannelFactory.cs" />
     <Compile Include="SolaceChannelListener.cs" />
     <Compile Include="SolaceConstants.cs" />
     <Compile Include="SolaceEndpoint.cs" />
-    <Compile Include="SolaceEndpointBehavior.cs" />
+    <Compile Include="SolaceProtobufEndpointBehavior.cs" />
+    <Compile Include="SolaceJsonEndpointBehavior.cs" />
+    <Compile Include="SolaceProtobufErrorHandler.cs" />
     <Compile Include="SolaceErrorHandler.cs" />
     <Compile Include="SolaceException.cs" />
     <Compile Include="SolaceExtensions.cs" />
@@ -121,6 +132,7 @@
     <Compile Include="SolaceMessageFormatter.cs" />
     <Compile Include="SolaceMessageInspector.cs" />
     <Compile Include="SolaceOperationSelector.cs" />
+    <Compile Include="SolaceProtobufMessageFormatter.cs" />
     <Compile Include="SolaceReplyChannel.cs" />
     <Compile Include="SolaceRequestChannel.cs" />
     <Compile Include="SolaceRequestContext.cs" />

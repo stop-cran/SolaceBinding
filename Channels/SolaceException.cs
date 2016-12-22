@@ -5,28 +5,35 @@ namespace Solace.Channels
 {
     public class SolaceException : Exception
     {
-        public JToken JsonException
+        public SolaceException(string message) { }
+        public SolaceException(string message, Exception innerException) { }
+    }
+
+
+    public class SolaceJsonException : SolaceException
+    {
+        public JToken JsonException { get; }
+
+        public SolaceJsonException(JToken json)
+            : base(json.ToString())
         {
-            get;
-            private set;
+            JsonException = json;
         }
 
-        public SolaceException(JToken json)
-            : base()
-        {
-            this.JsonException = json;
-        }
-
-        public SolaceException(JToken json, string message)
+        public SolaceJsonException(JToken json, string message)
             : base(message)
         {
-            this.JsonException = json;
+            JsonException = json;
+        }
+    }
+
+    public class SolaceProtobufException : SolaceException
+    {
+        public SolaceProtobufException(Error error) : base(error.message)
+        {
+            Error = error;
         }
 
-        public SolaceException(JToken json, string message, Exception innerException)
-            : base(message, innerException)
-        {
-            this.JsonException = json;
-        }
+        public Error Error { get; }
     }
 }
