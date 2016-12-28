@@ -2,7 +2,7 @@
 
 namespace Solace.Channels
 {
-    struct RequestParameter
+    public struct RequestParameter
     {
         public string Name;
         public int Index;

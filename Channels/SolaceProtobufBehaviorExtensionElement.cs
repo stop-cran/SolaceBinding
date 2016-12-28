@@ -21,7 +21,8 @@ namespace Solace.Channels
 
         protected override object CreateBehavior()
         {
-            return new SolaceProtobufEndpointBehavior(GetCustomConverters());
+            return new SolaceProtobufEndpointBehavior(new ProtobufConverterFactory(GetCustomConverters()),
+                ()=> new SolaceProtobufErrorHandler());
         }
     }
 }

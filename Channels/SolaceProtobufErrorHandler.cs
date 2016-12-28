@@ -50,7 +50,7 @@ namespace Solace.Channels
             };
         }
 
-        public static byte[] EncodeError(Exception error)
+        static byte[] EncodeError(Exception error)
         {
             var jsonException = error as SolaceJsonException;
 

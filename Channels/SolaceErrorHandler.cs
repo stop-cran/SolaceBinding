@@ -46,7 +46,7 @@ namespace Solace.Channels
             writer.WriteEndObject();
         }
 
-        public static byte[] EncodeError(Exception error)
+        static byte[] EncodeError(Exception error)
         {
             var jsonException = error as SolaceJsonException;
 

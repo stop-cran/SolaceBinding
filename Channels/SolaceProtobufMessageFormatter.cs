@@ -5,22 +5,18 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.ServiceModel;
-using System.IO;
-using ProtoBuf;
-using System.Linq.Expressions;
 using System.Text;
 
 namespace Solace.Channels
 {
-    class SolaceProtobufMessageFormatter : IClientMessageFormatter, IDispatchMessageFormatter
+    public class SolaceProtobufMessageFormatter : IClientMessageFormatter, IDispatchMessageFormatter
     {
         readonly string applicationMessageType;
         readonly string replyApplicationMessageType;
         readonly IReadOnlyList<RequestParameter> operationParameters;
-        readonly Type returnType;
         readonly IProtobufConverter converter;
 
-        public SolaceProtobufMessageFormatter(OperationDescription operation, IReadOnlyList<IValueConverter> converters)
+        public SolaceProtobufMessageFormatter(OperationDescription operation, IProtobufConverterFactory converterFactory)
         {
             var replyActionPrefix = operation.DeclaringContract.Namespace + operation.DeclaringContract.Name;
             var replyAction = operation.Messages[1].Action;
@@ -46,8 +42,7 @@ namespace Solace.Channels
                 }).ToList()
                 .AsReadOnly();
 
-            returnType = operation.Messages[1].Body.ReturnValue.Type;
-            converter = ProtobufConverterRepository.Create(operationParameters, returnType, converters);
+            this.converter = converterFactory.Create(operationParameters, operation.Messages[1].Body.ReturnValue.Type);
         }
 
         public object DeserializeReply(Message message, object[] parameters)

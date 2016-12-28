@@ -3,22 +3,24 @@ using System.ServiceModel.Description;
 using System.ServiceModel.Channels;
 using System.ServiceModel.Dispatcher;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Solace.Channels
 {
     public class SolaceProtobufEndpointBehavior : IEndpointBehavior
     {
-        readonly IReadOnlyList<IValueConverter> converters;
+        readonly IProtobufConverterFactory converterFactory;
+        readonly Func<IErrorHandler> errorHandlerFactory;
 
         public SolaceProtobufEndpointBehavior()
         {
-            converters = new List<IValueConverter>().AsReadOnly();
+            converterFactory = new ProtobufConverterFactory(new List<IValueConverter>().AsReadOnly());
+            errorHandlerFactory = () => new SolaceProtobufErrorHandler();
         }
 
-        public SolaceProtobufEndpointBehavior(IEnumerable<IValueConverter> converters)
+        public SolaceProtobufEndpointBehavior(IProtobufConverterFactory converterFactory, Func<IErrorHandler> errorHandlerFactory)
         {
-            this.converters = converters.ToList().AsReadOnly();
+            this.converterFactory = converterFactory;
+            this.errorHandlerFactory = errorHandlerFactory;
         }
 
         public void AddBindingParameters(ServiceEndpoint endpoint, BindingParameterCollection bindingParameters)
@@ -35,7 +37,7 @@ namespace Solace.Channels
                     ClientOperation clientOperation = clientRuntime.Operations[operation.Name];
                     clientOperation.SerializeRequest = true;
                     clientOperation.DeserializeReply = true;
-                    clientOperation.Formatter = new SolaceProtobufMessageFormatter(operation, converters);
+                    clientOperation.Formatter = new SolaceProtobufMessageFormatter(operation, converterFactory);
                 }
             }
         }
@@ -44,7 +46,7 @@ namespace Solace.Channels
         {
             endpointDispatcher.DispatchRuntime.MessageInspectors.Add(new SolaceMessageInspector());
             endpointDispatcher.DispatchRuntime.OperationSelector = new SolaceOperationSelector();
-            endpointDispatcher.ChannelDispatcher.ErrorHandlers.Add(new SolaceProtobufErrorHandler());
+            endpointDispatcher.ChannelDispatcher.ErrorHandlers.Add(errorHandlerFactory());
             endpointDispatcher.ContractFilter = new MatchAllMessageFilter();
             foreach (OperationDescription operation in endpoint.Contract.Operations)
             {
@@ -53,7 +55,7 @@ namespace Solace.Channels
                     DispatchOperation dispatchOperation = endpointDispatcher.DispatchRuntime.Operations[operation.Name];
                     dispatchOperation.DeserializeRequest = true;
                     dispatchOperation.SerializeReply = true;
-                    dispatchOperation.Formatter = new SolaceProtobufMessageFormatter(operation, converters);
+                    dispatchOperation.Formatter = new SolaceProtobufMessageFormatter(operation, converterFactory);
                 }
             }
         }
