@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>SolaceBinding</id>
-    <version>1.0.13</version>
+    <version>1.0.14</version>
     <title>SolaceBinding</title>
     <authors>stop-cran</authors>
     <owners>stop-cran</owners>

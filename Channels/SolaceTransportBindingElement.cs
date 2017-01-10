@@ -15,6 +15,7 @@ namespace Solace.Channels
             VPN = other.VPN;
             UserName = other.UserName;
             Password = other.Password;
+            SessionEvent += other.SessionEvent;
         }
 
         public override string Scheme

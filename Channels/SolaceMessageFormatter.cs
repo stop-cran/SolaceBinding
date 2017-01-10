@@ -52,7 +52,7 @@ namespace Solace.Channels
 
         public object DeserializeReply(Message message, object[] parameters)
         {
-            var reader = SolaceHelpers.DeserializeMessage(message);
+            var reader = GetJsonReaderAtMessageBody(message);
             var settings = settingsProvider();
 
             settings.MissingMemberHandling = MissingMemberHandling.Error;
@@ -105,13 +105,27 @@ namespace Solace.Channels
                     jsonWriter.WriteEndObject();
                 }
 
-                var message = SolaceHelpers.SerializeMessage(stream.ToArray());
+                var message = MessageBinaryHelper.SerializeMessage(stream.ToArray());
 
                 message.Properties[SolaceConstants.ApplicationMessageTypeKey] = applicationMessageType;
                 message.Properties[SolaceConstants.CorrelationIdKey] = new RequestCorrelationState();
 
                 return message;
             }
+        }
+
+        static JsonTextReader GetJsonReaderAtMessageBody(Message message)
+        {
+            object reader;
+
+            return message.Properties.TryGetValue(SolaceConstants.ReplyReaderKey, out reader)
+                ? (JsonTextReader)reader
+                : new JsonTextReader(
+                    new StreamReader(
+                        new MemoryStream(MessageBinaryHelper.ReadMessageBinary(message))))
+                {
+                    CloseInput = true
+                };
         }
 
         public void DeserializeRequest(Message message, object[] parameters)
@@ -127,7 +141,7 @@ namespace Solace.Channels
 
             var filledParts = new bool[operationParameters.Count];
 
-            using (var reader = SolaceHelpers.DeserializeMessage(message))
+            using (var reader = GetJsonReaderAtMessageBody(message))
             {
                 if (!reader.Read() || !reader.Read())
                     throw new JsonReaderException("Error reading the request");
@@ -203,7 +217,7 @@ namespace Solace.Channels
 
         public Message SerializeReply(MessageVersion messageVersion, object[] parameters, object result)
         {
-            var reply = SolaceHelpers.SerializeMessage(Serialize(result));
+            var reply = MessageBinaryHelper.SerializeMessage(Serialize(result));
 
             reply.Properties[SolaceConstants.ApplicationMessageTypeKey] = replyApplicationMessageType;
 

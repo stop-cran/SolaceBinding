@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SolaceSystems.Solclient.Messaging;
+using System;
 using System.ServiceModel;
 using System.ServiceModel.Channels;
 using System.Threading.Tasks;
@@ -10,9 +11,10 @@ namespace Solace.Channels
         Uri via;
         EndpointAddress remoteAddress;
         readonly string vpn, user, password;
+        readonly Action<SessionEventArgs> raiseSessionEvent;
 
         public SolaceRequestChannel(MessageEncoder encoder, BufferManager bufferManager, ChannelManagerBase channelManager, EndpointAddress remoteAddress, Uri via,
-            string vpn, string user, string password)
+            string vpn, string user, string password, Action<SessionEventArgs> raiseSessionEvent)
             : base(encoder, bufferManager, channelManager)
         {
             this.via = via;
@@ -20,6 +22,7 @@ namespace Solace.Channels
             this.vpn = vpn;
             this.user = user;
             this.password = password;
+            this.raiseSessionEvent = raiseSessionEvent;
         }
 
         public IAsyncResult BeginRequest(Message message, TimeSpan timeout, AsyncCallback callback, object state)
@@ -75,7 +78,7 @@ namespace Solace.Channels
 
         void Connect()
         {
-            var endpoint = new SolaceEndpoint(Via, vpn, user, password);
+            var endpoint = new SolaceEndpoint(Via, vpn, user, password, (sender, args) => raiseSessionEvent(args));
             endpoint.Connect();
 
             base.InitializeSolaceEndpoint(endpoint);

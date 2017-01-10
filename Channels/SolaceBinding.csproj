@@ -116,6 +116,8 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RawBodyWriter.cs" />
     <Compile Include="SolaceBaseChannel.cs" />
+    <Compile Include="SolaceJsonPassthroughErrorHandler.cs" />
+    <Compile Include="SolaceJsonErrorHandler.cs" />
     <Compile Include="SolaceProtobufBehaviorExtensionElement.cs" />
     <Compile Include="SolaceJsonBehaviorExtensionElement.cs" />
     <Compile Include="SolaceBindingExtensionElement.cs" />
@@ -129,7 +131,7 @@
     <Compile Include="SolaceErrorHandler.cs" />
     <Compile Include="SolaceException.cs" />
     <Compile Include="SolaceExtensions.cs" />
-    <Compile Include="SolaceHelpers.cs" />
+    <Compile Include="MessageBinaryHelper.cs" />
     <Compile Include="SolaceMessageFormatter.cs" />
     <Compile Include="SolaceMessageInspector.cs" />
     <Compile Include="SolaceOperationSelector.cs" />

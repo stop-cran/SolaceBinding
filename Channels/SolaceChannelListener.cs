@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SolaceSystems.Solclient.Messaging;
+using System;
 using System.Collections.ObjectModel;
 using System.ServiceModel.Channels;
 using System.Threading.Tasks;
@@ -12,6 +13,7 @@ namespace Solace.Channels
         SolaceEndpoint endpoint;
         Uri uri;
         readonly string vpn, user, password;
+        readonly Action<SessionEventArgs> raiseSessionEvent;
 
         public SolaceChannelListener(SolaceTransportBindingElement bindingElement, BindingContext context)
             : base(context.Binding)
@@ -22,6 +24,7 @@ namespace Solace.Channels
             this.vpn = bindingElement.VPN;
             this.user = bindingElement.UserName;
             this.password = bindingElement.Password;
+            this.raiseSessionEvent = bindingElement.RaiseSessionEvent;
 
             Collection<MessageEncodingBindingElement> messageEncoderBindingElements
                 = context.BindingParameters.FindAll<MessageEncodingBindingElement>();
@@ -129,7 +132,7 @@ namespace Solace.Channels
 
         void OpenEndpoint()
         {
-            this.endpoint = new SolaceEndpoint(uri, vpn, user, password);
+            this.endpoint = new SolaceEndpoint(uri, vpn, user, password, (sender, args) => raiseSessionEvent(args));
             this.endpoint.Connect();
             this.endpoint.Listen();
         }

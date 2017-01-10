@@ -14,23 +14,38 @@ namespace Solace.Channels
         readonly string applicationMessageType;
         readonly string replyApplicationMessageType;
         readonly IReadOnlyList<RequestParameter> operationParameters;
-        readonly IProtobufConverter converter;
 
         public SolaceProtobufMessageFormatter(OperationDescription operation, IProtobufConverterFactory converterFactory)
+        {
+            applicationMessageType = operation.Name;
+            replyApplicationMessageType = GetReplyApplicationMessageType(operation);
+
+            operationParameters = GetRequestParameters(operation)
+                .ToList()
+                .AsReadOnly();
+
+            this.Converter = converterFactory.Create(operationParameters, operation.Messages[1].Body.ReturnValue.Type);
+        }
+
+        public IProtobufConverter Converter { get; }
+
+        static string GetReplyApplicationMessageType(OperationDescription operation)
         {
             var replyActionPrefix = operation.DeclaringContract.Namespace + operation.DeclaringContract.Name;
             var replyAction = operation.Messages[1].Action;
 
-            applicationMessageType = operation.Name;
-            replyApplicationMessageType = replyAction.StartsWith(replyActionPrefix)
+            return replyAction.StartsWith(replyActionPrefix)
                 ? replyAction.Substring(replyActionPrefix.Length).TrimStart('/')
                 : replyAction;
+        }
 
+        static IEnumerable<RequestParameter> GetRequestParameters(OperationDescription operation)
+        {
             var properties = new HashSet<string>(from parameter in (operation.TaskMethod ?? operation.SyncMethod).GetParameters()
                                                  where parameter.GetCustomAttributes(typeof(MessageParameterAttribute), true).Any()
                                                  select parameter.Name);
 
-            operationParameters = operation.Messages[0].Body.Parts
+            return operation.Messages[0].Body.Parts
                 .Select(part => new RequestParameter
                 {
                     Name = part.Name,
@@ -39,20 +54,17 @@ namespace Solace.Channels
                     IsFromProperty = properties.Contains(part.Name),
                     IsRequired = properties.Contains(part.Name) ||
                         part.Type.IsValueType && (!part.Type.IsGenericType || part.Type.GetGenericTypeDefinition() != typeof(Nullable<>))
-                }).ToList()
-                .AsReadOnly();
-
-            this.converter = converterFactory.Create(operationParameters, operation.Messages[1].Body.ReturnValue.Type);
+                });
         }
 
         public object DeserializeReply(Message message, object[] parameters)
         {
-            return converter.DeserializeReply(ReadMessageBinaryHelper(message));
+            return Converter.DeserializeReply(ReadMessageBinaryHelper(message));
         }
 
         public Message SerializeRequest(MessageVersion messageVersion, object[] parameters)
         {
-            var message = SolaceHelpers.SerializeMessage(converter.SerializeRequest(parameters));
+            var message = MessageBinaryHelper.SerializeMessage(Converter.SerializeRequest(parameters));
 
             message.Properties[SolaceConstants.ApplicationMessageTypeKey] = applicationMessageType;
             message.Properties[SolaceConstants.CorrelationIdKey] = new RequestCorrelationState();
@@ -71,7 +83,7 @@ namespace Solace.Channels
                     throw new ArgumentException("Required parameter was not provided.", part.Name);
             }
 
-            converter.DeserializeRequest(ReadMessageBinaryHelper(message), parameters);
+            Converter.DeserializeRequest(ReadMessageBinaryHelper(message), parameters);
 
             var notFilled = operationParameters.FirstOrDefault(p => !p.IsFromProperty && p.IsRequired && parameters[p.Index] == null);
 
@@ -81,7 +93,7 @@ namespace Solace.Channels
 
         public Message SerializeReply(MessageVersion messageVersion, object[] parameters, object result)
         {
-            var reply = SolaceHelpers.SerializeMessage(converter.SerializeReply(result));
+            var reply = MessageBinaryHelper.SerializeMessage(Converter.SerializeReply(result));
 
             reply.Properties[SolaceConstants.ApplicationMessageTypeKey] = replyApplicationMessageType;
 
@@ -92,7 +104,7 @@ namespace Solace.Channels
 
         static byte[] ReadMessageBinaryHelper(Message message)
         {
-            var binary = SolaceHelpers.ReadMessageBinary(message);
+            var binary = MessageBinaryHelper.ReadMessageBinary(message);
 
             return binary.SequenceEqual(empty) ? new byte[0] : binary;
         }

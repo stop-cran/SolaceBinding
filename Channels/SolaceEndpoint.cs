@@ -12,9 +12,11 @@ namespace Solace.Channels
         ISession session;
         BlockingCollection<IMessage> messages = new BlockingCollection<IMessage>();
         ITopic topic;
+        readonly EventHandler<SessionEventArgs> sessionEvent;
 
-        public SolaceEndpoint(Uri address, string vpn, string user, string password)
+        public SolaceEndpoint(Uri address, string vpn, string user, string password, EventHandler<SessionEventArgs> sessionEvent)
         {
+            this.sessionEvent = sessionEvent;
             RemoteEndPoint = address;
             context = ContextFactory.Instance.CreateContext(new ContextProperties(), null);
             session = context.CreateSession(new SessionProperties
@@ -26,7 +28,7 @@ namespace Solace.Channels
                 ReconnectRetries = 10,
                 ReconnectRetriesWaitInMsecs = 10000,
                 ReapplySubscriptions = true
-            }, (sender, e) => messages.Add(e.Message), null);
+            }, (sender, e) => messages.Add(e.Message), sessionEvent);
 
             topic = ContextFactory.Instance.CreateTopic(address.AbsolutePath.Replace("%3E", ">").TrimStart('/'));
         }
@@ -45,7 +47,7 @@ namespace Solace.Channels
         {
             var message = Receive(); // block till recieving a message
             var properties = session.Properties;
-            var res = new SolaceEndpoint(RemoteEndPoint, properties.VPNName, properties.UserName, properties.Password);
+            var res = new SolaceEndpoint(RemoteEndPoint, properties.VPNName, properties.UserName, properties.Password, sessionEvent);
 
             res.messages.Add(message);
             res.Connect();

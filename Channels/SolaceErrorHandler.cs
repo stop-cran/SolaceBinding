@@ -1,71 +1,39 @@
 ﻿using System;
 using System.ServiceModel.Dispatcher;
 using System.ServiceModel.Channels;
-using Newtonsoft.Json;
 using System.IO;
 
 namespace Solace.Channels
 {
-    class SolaceErrorHandler : IErrorHandler
+    public abstract class SolaceErrorHandler : IErrorHandler
     {
-        public bool HandleError(Exception error)
-        {
-            return true;
-        }
+        public abstract bool HandleError(Exception error);
 
         public void ProvideFault(Exception error, MessageVersion version, ref Message fault)
         {
-            var message = SolaceHelpers.SerializeMessage(EncodeError(error));
-
-            if (fault != null)
+            if (HandleError(error))
             {
-                message.Properties.CopyProperties(fault.Properties);
-                message.Headers.CopyHeadersFrom(fault.Headers);
-                fault.Close();
-            }
-            message.Properties[SolaceConstants.ApplicationMessageTypeKey] = "Fault";
-            fault = message;
-        }
+                Message message;
 
-        static void WriteException(JsonTextWriter writer, Exception ex)
-        {
-            writer.WriteStartObject();
-            writer.WritePropertyName("type");
-            writer.WriteValue(ex.GetType().FullName);
-            writer.WritePropertyName("message");
-            writer.WriteValue(ex.Message);
-
-            var inner = ex.InnerException;
-
-            if (inner != null)
-            {
-                writer.WritePropertyName("inner");
-                WriteException(writer, inner);
-            }
-
-            writer.WriteEndObject();
-        }
-
-        static byte[] EncodeError(Exception error)
-        {
-            var jsonException = error as SolaceJsonException;
-
-            if (jsonException != null)
-                return System.Text.Encoding.UTF8.GetBytes(jsonException.JsonException.ToString());
-            else
                 using (var stream = new MemoryStream())
                 {
-                    using (var writer = new StreamWriter(stream))
-                    using (var jsonWriter = new JsonTextWriter(writer))
-                    {
-                        jsonWriter.WriteStartObject();
-                        jsonWriter.WritePropertyName(SolaceConstants.ErrorKey);
-                        WriteException(jsonWriter, error);
-                        jsonWriter.WriteEndObject();
-                    }
-
-                    return stream.ToArray();
+                    WriteException(error, stream,
+                        fault == null ? null : fault.Properties[SolaceConstants.ApplicationMessageTypeKey].ToString());
+                    message = MessageBinaryHelper.SerializeMessage(stream.ToArray());
                 }
+
+                if (fault != null)
+                {
+                    message.Properties.CopyProperties(fault.Properties);
+                    message.Headers.CopyHeadersFrom(fault.Headers);
+                    fault.Close();
+                }
+
+                message.Properties[SolaceConstants.ApplicationMessageTypeKey] = "Fault";
+                fault = message;
+            }
         }
+        
+        protected abstract void WriteException(Exception error, Stream stream, string action);
     }
 }

@@ -29,7 +29,7 @@ namespace Solace.Channels
             clientRuntime.MessageInspectors.Add(new SolaceMessageInspector());
             foreach (OperationDescription operation in endpoint.Contract.Operations)
             {
-                if (!SolaceHelpers.IsUntypedMessage(operation))
+                if (!MessageBinaryHelper.IsUntypedMessage(operation))
                 {
                     ClientOperation clientOperation = clientRuntime.Operations[operation.Name];
                     clientOperation.SerializeRequest = true;
@@ -43,11 +43,12 @@ namespace Solace.Channels
         {
             endpointDispatcher.DispatchRuntime.MessageInspectors.Add(new SolaceMessageInspector());
             endpointDispatcher.DispatchRuntime.OperationSelector = new SolaceOperationSelector();
-            endpointDispatcher.ChannelDispatcher.ErrorHandlers.Add(new SolaceErrorHandler());
+            endpointDispatcher.ChannelDispatcher.ErrorHandlers.Add(new SolaceJsonErrorHandler());
+            endpointDispatcher.ChannelDispatcher.ErrorHandlers.Add(new SolaceJsonPassthroughErrorHandler());
             endpointDispatcher.ContractFilter = new MatchAllMessageFilter();
             foreach (OperationDescription operation in endpoint.Contract.Operations)
             {
-                if (!SolaceHelpers.IsUntypedMessage(operation))
+                if (!MessageBinaryHelper.IsUntypedMessage(operation))
                 {
                     DispatchOperation dispatchOperation = endpointDispatcher.DispatchRuntime.Operations[operation.Name];
                     dispatchOperation.DeserializeRequest = true;
