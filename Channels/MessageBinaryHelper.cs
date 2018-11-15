@@ -1,8 +1,6 @@
 ﻿using System;
 using System.ServiceModel.Description;
 using System.ServiceModel.Channels;
-using System.IO;
-using Newtonsoft.Json;
 using Solace.Utils;
 
 namespace Solace.Channels
@@ -16,6 +14,8 @@ namespace Solace.Channels
                 case 1:
                     return operation.Messages[0].Body.Parts[0].Type == typeof(Message);
                 case 0:
+                    if (operation.IsOneWay)
+                        return false;
                     Type returnType = operation.Messages[1].Body.ReturnValue.Type;
                     return returnType == typeof(void) || returnType == typeof(Message);
                 default:

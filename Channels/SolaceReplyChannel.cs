@@ -3,16 +3,19 @@ using System.ServiceModel.Channels;
 using System.ServiceModel;
 using System.Threading.Tasks;
 using SolaceSystems.Solclient.Messaging;
+using System.Collections.Generic;
+using Solace.Channels.MessageConverters;
 
 namespace Solace.Channels
 {
     class SolaceReplyChannel : SolaceBaseChannel, IReplyChannel
     {
         Uri localAddress;
-        SolaceEndpoint endpoint;
+        ISolaceEndpoint endpoint;
+        bool began;
 
-        public SolaceReplyChannel(MessageEncoder encoder, BufferManager bufferManager, Uri localAddress, SolaceEndpoint endpoint, ChannelManagerBase channelManager)
-            : base(encoder, bufferManager, channelManager)
+        public SolaceReplyChannel(MessageEncoder encoder, BufferManager bufferManager, Uri localAddress, ISolaceEndpoint endpoint, ChannelManagerBase channelManager, IEnumerable<IMessageConverter> converters)
+            : base(encoder, bufferManager, channelManager, converters)
         {
             this.localAddress = localAddress;
             this.endpoint = endpoint;
@@ -31,7 +34,12 @@ namespace Solace.Channels
 
         public IAsyncResult BeginTryReceiveRequest(TimeSpan timeout, AsyncCallback callback, object state)
         {
-            return BeginReceiveMessage(timeout, callback, state);
+            if (!began)
+                began = true;
+            else
+                return Task.FromResult<Message>(null);
+
+            return BeginTryReceiveMessage(timeout, callback, state);
         }
 
         public IAsyncResult BeginWaitForRequest(TimeSpan timeout, AsyncCallback callback, object state)
@@ -41,7 +49,9 @@ namespace Solace.Channels
 
         public RequestContext EndReceiveRequest(IAsyncResult result)
         {
-            return new SolaceRequestContext(this, ((Task<Message>)result).Result, TimeSpan.MaxValue);
+            var res = new SolaceRequestContext(this, ((Task<Message>)result).Result, TimeSpan.MaxValue);
+
+            return res;
         }
 
         public bool EndTryReceiveRequest(IAsyncResult result, out RequestContext context)
@@ -55,6 +65,7 @@ namespace Solace.Channels
             }
 
             context = new SolaceRequestContext(this, message, TimeSpan.MaxValue);
+
             return true;
         }
 
@@ -70,7 +81,8 @@ namespace Solace.Channels
 
         public RequestContext ReceiveRequest(TimeSpan timeout)
         {
-            Message request = this.ReceiveMessage(timeout);
+            var request = this.ReceiveMessage(timeout);
+
             return new SolaceRequestContext(this, request, timeout);
         }
 

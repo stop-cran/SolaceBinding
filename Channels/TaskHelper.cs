@@ -11,8 +11,14 @@ namespace Solace.Channels
 
             res.ContinueWith(t =>
             {
-                t.Exception?.ToString();
-                callback(t);
+                t.Exception?.ToString(); // to avoid UnobservedTaskException
+
+                try
+                {
+                    callback(t);
+                }
+                catch (ObjectDisposedException)
+                { }
             });
 
             res.Start();
@@ -26,8 +32,14 @@ namespace Solace.Channels
 
             res.ContinueWith(t =>
             {
-                t.Exception?.ToString();
-                callback(t);
+                t.Exception?.ToString(); // to avoid UnobservedTaskException
+
+                try
+                {
+                    callback(t);
+                }
+                catch (ObjectDisposedException)
+                { }
             });
 
             res.Start();

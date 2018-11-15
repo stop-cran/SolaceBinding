@@ -5,8 +5,7 @@
 *.nupkg
 bin/
 obj/
-ClientBin/
 packages/
 x86/
 x64/
-API/
+.vs

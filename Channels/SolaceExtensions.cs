@@ -25,5 +25,12 @@ namespace Solace.Channels
 
             return new ArraySegment<byte>(buffer, 0, attachment.Length);
         }
+
+        internal static object TryGetValue(this MessageProperties properties, string key)
+        {
+            object obj;
+
+            return properties.TryGetValue(key, out obj) ? obj : null;
+        }
     }
 }

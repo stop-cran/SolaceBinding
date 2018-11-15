@@ -1,145 +1,69 @@
 ﻿using System.Threading;
 using SolaceSystems.Solclient.Messaging;
-using System.Threading.Tasks;
 using System.Collections.Concurrent;
 using System;
 
 namespace Solace.Channels
 {
-    class SolaceEndpoint : IDisposable
+    class SolaceEndpoint : SolaceEndpointBase, IDisposable
     {
-        IContext context;
-        ISession session;
-        BlockingCollection<IMessage> messages = new BlockingCollection<IMessage>();
-        ITopic topic;
+        readonly BlockingCollection<ISession> replySessions = new BlockingCollection<ISession>();
+        readonly BlockingCollection<IMessage> messages = new BlockingCollection<IMessage>();
         readonly EventHandler<SessionEventArgs> sessionEvent;
+        bool subscribed;
+        readonly Func<ISession> createSession;
 
-        public SolaceEndpoint(Uri address, string vpn, string user, string password, EventHandler<SessionEventArgs> sessionEvent)
+        public SolaceEndpoint(Uri address, string vpn, string user, string password, int replySessionCount, EventHandler<SessionEventArgs> sessionEvent, IContext context)
+            : base(address)
         {
             this.sessionEvent = sessionEvent;
-            RemoteEndPoint = address;
-            context = ContextFactory.Instance.CreateContext(new ContextProperties(), null);
-            session = context.CreateSession(new SessionProperties
+            createSession = () => CreateSession(address, vpn, user, password,
+                (sender, e) => messages.Add(e.Message),
+                sessionEvent, context);
+
+            session = createSession();
+
+            replySessions.Add(session);
+
+            for (int i = 0; i < replySessionCount; i++)
+            {
+                var replySession = createSession();
+                replySession.Connect().EnsureSuccess();
+
+                replySessions.Add(replySession);
+            }
+        }
+
+        static ISession CreateSession(Uri address, string vpn, string user, string password, EventHandler<MessageEventArgs> messageEvent,
+            EventHandler<SessionEventArgs> sessionEvent, IContext context)
+        {
+            return context.CreateSession(new SessionProperties
             {
                 Host = address.Authority,
                 VPNName = vpn,
                 UserName = user,
                 Password = password,
-                ReconnectRetries = 10,
+                ReconnectRetries = -1,
                 ReconnectRetriesWaitInMsecs = 10000,
                 ReapplySubscriptions = true
-            }, (sender, e) => messages.Add(e.Message), sessionEvent);
-
-            topic = ContextFactory.Instance.CreateTopic(address.AbsolutePath.Replace("%3E", ">").TrimStart('/'));
+            }, messageEvent, sessionEvent);
         }
 
-        public Uri RemoteEndPoint
+        public override ISolaceEndpoint Accept()
         {
-            get; private set;
+            return new SolaceReplyEndpoint(RemoteEndPoint, replySessions.Take(), Receive(), replySessions.Add);
         }
 
-        public bool Connected
+        public override void Listen()
         {
-            get; private set;
-        }
-
-        public SolaceEndpoint Accept()
-        {
-            var message = Receive(); // block till recieving a message
-            var properties = session.Properties;
-            var res = new SolaceEndpoint(RemoteEndPoint, properties.VPNName, properties.UserName, properties.Password, sessionEvent);
-
-            res.messages.Add(message);
-            res.Connect();
-            res.Listen();
-
-            return res;
-        }
-
-        public void Connect()
-        {
-            session.Connect().EnsureSuccess();
-            Connected = true;
-        }
-
-        public void Close()
-        {
-            Close(session.Properties.ConnectTimeoutInMsecs);
-        }
-
-        public void Close(int timeout)
-        {
-            session.Disconnect().EnsureSuccess();
-            Connected = false;
-        }
-
-
-        public void Listen()
-        {
-            session.Subscribe(topic, true).EnsureSuccess();
-        }
-
-        public void SendReply(IDestination destination, string correlationId, string applicationMessageType, byte[] buffer)
-        {
-            if (buffer != null)
+            if (!subscribed)
             {
-                var request = session.CreateMessage();
-                var message = session.CreateMessage();
-
-                request.ReplyTo = destination;
-                request.CorrelationId = correlationId;
-
-                message.ApplicationMessageType = "WTS.01.v1";
-                message.BinaryAttachment = buffer;
-                message.ApplicationMessageType = applicationMessageType;
-
-                session.SendReply(request, message).EnsureSuccess();
+                session.Subscribe(topic, true).EnsureSuccess();
+                subscribed = true;
             }
         }
 
-        public IMessage SendRequest(byte[] buffer, string applicationMessageType, TimeSpan timeout)
-        {
-            var message = session.CreateMessage();
-
-            message.SenderId = session.Properties.ClientName;
-            message.Destination = topic;
-            message.BinaryAttachment = buffer;
-            message.ApplicationMessageType = applicationMessageType;
-
-            IMessage reply;
-
-            session.SendRequest(message, out reply, (int)timeout.TotalMilliseconds).EnsureSuccess();
-
-            return reply;
-        }
-
-        public void SendReply(IDestination destination, string correlationId, string applicationMessageType, ArraySegment<byte> buffer)
-        {
-            SendReply(destination, correlationId, applicationMessageType, Copy(buffer));
-        }
-
-        private static byte[] Copy(ArraySegment<byte> buffer)
-        {
-            byte[] attachment;
-
-            if (buffer.Array == null || buffer.Offset == 0 && buffer.Count == buffer.Array.Length)
-                attachment = buffer.Array;
-            else
-            {
-                attachment = new byte[buffer.Count];
-                Buffer.BlockCopy(buffer.Array, buffer.Offset, attachment, 0, buffer.Count);
-            }
-
-            return attachment;
-        }
-
-        public IMessage SendRequest(ArraySegment<byte> buffer, string applicationMessageType, TimeSpan timeout)
-        {
-            return SendRequest(Copy(buffer), applicationMessageType, timeout);
-        }
-
-
-        public IMessage Receive(TimeSpan timeout)
+        public override IMessage Receive(TimeSpan timeout)
         {
             if (timeout.TotalDays > 1)
                 return messages.Take();
@@ -148,58 +72,25 @@ namespace Solace.Channels
                     return messages.Take(c.Token);
         }
 
-        public IMessage Receive()
+        public override IMessage Receive()
         {
             return messages.Take();
         }
 
-        public IAsyncResult BeginConnect(AsyncCallback callback, object state)
+        public override void Close(int timeout)
         {
-            return Task.Run((Action)Connect).ContinueWith(t =>
+            if (subscribed)
             {
-                t.Exception?.ToString();
-                callback(t);
-            });
-        }
-
-        public void EndConnect(IAsyncResult asyncResult)
-        {
-            ((Task)asyncResult).Wait();
-        }
-
-        public void EndSendReply(IAsyncResult asyncResult)
-        {
-            ((Task)asyncResult).Wait();
-        }
-
-        public IAsyncResult BeginReceive(AsyncCallback callback, object state)
-        {
-            return TaskHelper.CreateTask(() => Receive(), callback, state);
-        }
-
-        public IMessage EndReceive(IAsyncResult asyncResult)
-        {
-            return ((Task<IMessage>)asyncResult).Result;
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                session.Dispose();
-                context.Dispose();
+                session.Unsubscribe(topic, true);
+                subscribed = false;
             }
+
+            base.Close(timeout);
         }
 
         public void Dispose()
         {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        ~SolaceEndpoint()
-        {
-            Dispose(false);
+            session.Dispose();
         }
     }
 }

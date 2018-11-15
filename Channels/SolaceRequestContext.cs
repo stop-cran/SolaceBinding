@@ -19,8 +19,10 @@ namespace Solace.Channels
             this.requestMessage = requestMessage;
             this.timeout = timeout;
 
-            replyTo = (IDestination)requestMessage.Properties[SolaceConstants.ReplyToKey];
-            correlationId = (string)requestMessage.Properties[SolaceConstants.CorrelationIdKey];
+            replyTo = (IDestination)requestMessage.Properties.TryGetValue(SolaceConstants.ReplyToKey);
+
+            if (replyTo != null)
+                correlationId = (string)requestMessage.Properties[SolaceConstants.CorrelationIdKey];
         }
 
         public override void Abort()
@@ -30,12 +32,12 @@ namespace Solace.Channels
 
         public override IAsyncResult BeginReply(Message message, TimeSpan timeout, AsyncCallback callback, object state)
         {
-            return TaskHelper.CreateTask(() => this.replyChannel.SendReply(replyTo, correlationId, message, timeout), callback, state);
+            return replyTo == null ? Task.CompletedTask : TaskHelper.CreateTask(() => this.replyChannel.SendReply(replyTo, correlationId, message, timeout), callback, state);
         }
 
         public override IAsyncResult BeginReply(Message message, AsyncCallback callback, object state)
         {
-            return TaskHelper.CreateTask(() => this.replyChannel.SendReply(replyTo, correlationId, message, timeout), callback, state);
+            return replyTo == null ? Task.CompletedTask : TaskHelper.CreateTask(() => this.replyChannel.SendReply(replyTo, correlationId, message, timeout), callback, state);
         }
 
         public override void Close(TimeSpan timeout)
@@ -55,12 +57,14 @@ namespace Solace.Channels
 
         public override void Reply(Message message, TimeSpan timeout)
         {
-            this.replyChannel.SendReply(replyTo, correlationId, message, timeout);
+            if (replyTo != null)
+                this.replyChannel.SendReply(replyTo, correlationId, message, timeout);
         }
 
         public override void Reply(Message message)
         {
-            this.replyChannel.SendReply(replyTo, correlationId, message, timeout);
+            if (replyTo != null)
+                this.replyChannel.SendReply(replyTo, correlationId, message, timeout);
         }
 
         public override Message RequestMessage

@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>SolaceBinding</id>
-    <version>1.0.14</version>
+    <version>1.4.6</version>
     <title>SolaceBinding</title>
     <authors>stop-cran</authors>
     <owners>stop-cran</owners>
@@ -10,12 +10,14 @@
     <projectUrl>https://github.com/stop-cran/SolaceBinding</projectUrl>
     <requireLicenseAcceptance>true</requireLicenseAcceptance>
     <description>Allows to use WCF over Solace messaging platform with JSON message format.</description>
-    <releaseNotes>Extracted IProtobufConverterFactory.</releaseNotes>
-    <copyright>Copyright © stop-cran, 2016</copyright>
+    <releaseNotes>Fixed channel listener closing.</releaseNotes>
+    <copyright>Copyright © stop-cran, 2016-2017</copyright>
     <tags>WCF Solace Messaging</tags>
     <dependencies>
       <dependency id="Newtonsoft.Json" version="9.0.1" />
       <dependency id="protobuf-net" version="2.1.0" />
+	    <dependency id="SolaceBinding.Attributes" version="1.0.1" />
+	    <dependency id="SolaceSystems.Solclient.Messaging" version="10.0.0" />
     </dependencies>
   </metadata>
 </package>

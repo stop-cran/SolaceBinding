@@ -20,14 +20,17 @@ namespace Solace.Channels
 
         public object AfterReceiveRequest(ref Message request, IClientChannel channel, InstanceContext instanceContext)
         {
-            return request.Properties[SolaceConstants.CorrelationIdKey];
+            return request.Properties.TryGetValue(SolaceConstants.CorrelationIdKey);
         }
 
         public void BeforeSendReply(ref Message reply, object correlationState)
         {
-            if (!reply.Properties.ContainsKey(SolaceConstants.ApplicationMessageTypeKey))
-                reply.Properties[SolaceConstants.ApplicationMessageTypeKey] = "Fault";
-            reply.Properties[SolaceConstants.CorrelationIdKey] = correlationState;
+            if (reply != null)
+            {
+                if (!reply.Properties.ContainsKey(SolaceConstants.ApplicationMessageTypeKey))
+                    reply.Properties[SolaceConstants.ApplicationMessageTypeKey] = "Fault";
+                reply.Properties[SolaceConstants.CorrelationIdKey] = correlationState;
+            }
         }
     }
 }

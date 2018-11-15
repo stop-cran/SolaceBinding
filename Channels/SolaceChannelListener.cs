@@ -1,6 +1,6 @@
-﻿using SolaceSystems.Solclient.Messaging;
+﻿using Solace.Channels.MessageConverters;
 using System;
-using System.Collections.ObjectModel;
+using System.Collections.Generic;
 using System.ServiceModel.Channels;
 using System.Threading.Tasks;
 
@@ -12,8 +12,8 @@ namespace Solace.Channels
         MessageEncoderFactory encoderFactory;
         SolaceEndpoint endpoint;
         Uri uri;
-        readonly string vpn, user, password;
-        readonly Action<SessionEventArgs> raiseSessionEvent;
+        readonly SolaceEndpointCache enpointCache;
+        readonly IEnumerable<IMessageConverter> converters;
 
         public SolaceChannelListener(SolaceTransportBindingElement bindingElement, BindingContext context)
             : base(context.Binding)
@@ -21,31 +21,24 @@ namespace Solace.Channels
             // populate members from binding element
             int maxBufferSize = (int)bindingElement.MaxReceivedMessageSize;
             this.bufferManager = BufferManager.CreateBufferManager(bindingElement.MaxBufferPoolSize, maxBufferSize);
-            this.vpn = bindingElement.VPN;
-            this.user = bindingElement.UserName;
-            this.password = bindingElement.Password;
-            this.raiseSessionEvent = bindingElement.RaiseSessionEvent;
+            enpointCache = bindingElement.EndpointCache;
 
-            Collection<MessageEncodingBindingElement> messageEncoderBindingElements
+            converters = context.BindingParameters.FindAll<IMessageConverter>();
+
+            var messageEncoderBindingElements
                 = context.BindingParameters.FindAll<MessageEncodingBindingElement>();
 
             if (messageEncoderBindingElements.Count > 1)
-            {
                 throw new InvalidOperationException("More than one MessageEncodingBindingElement was found in the BindingParameters of the BindingContext");
-            }
             else if (messageEncoderBindingElements.Count == 1)
             {
                 if (!(messageEncoderBindingElements[0] is ByteStreamMessageEncodingBindingElement))
-                {
                     throw new InvalidOperationException("This transport must be used with the ByteStreamMessageEncodingBindingElement.");
-                }
 
                 this.encoderFactory = messageEncoderBindingElements[0].CreateMessageEncoderFactory();
             }
             else
-            {
                 this.encoderFactory = new ByteStreamMessageEncodingBindingElement().CreateMessageEncoderFactory();
-            }
 
             this.uri = new Uri(context.ListenUriBaseAddress, context.ListenUriRelativeAddress);
         }
@@ -54,7 +47,7 @@ namespace Solace.Channels
         {
             try
             {
-                return new SolaceReplyChannel(this.encoderFactory.Encoder, this.bufferManager, this.uri, endpoint.Accept(), this);
+                return new SolaceReplyChannel(this.encoderFactory.Encoder, this.bufferManager, this.uri, endpoint.Accept(), this, converters);
             }
             catch (ObjectDisposedException)
             {
@@ -115,6 +108,13 @@ namespace Solace.Channels
             this.CloseEndpoint(timeout);
         }
 
+        protected override void OnClosed()
+        {
+            base.OnClosed();
+            if (State != System.ServiceModel.CommunicationState.Closed)
+                1.ToString();
+        }
+
         protected override void OnEndClose(IAsyncResult result)
         {
             CompletedAsyncResult.End(result);
@@ -132,7 +132,7 @@ namespace Solace.Channels
 
         void OpenEndpoint()
         {
-            this.endpoint = new SolaceEndpoint(uri, vpn, user, password, (sender, args) => raiseSessionEvent(args));
+            this.endpoint = enpointCache.Create(uri);
             this.endpoint.Connect();
             this.endpoint.Listen();
         }

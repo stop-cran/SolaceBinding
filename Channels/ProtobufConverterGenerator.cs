@@ -136,7 +136,7 @@ namespace Solace.Channels
                     new CodeAttributeDeclaration(
                         new CodeTypeReference(typeof(ProtoMemberAttribute)),
                         new CodeAttributeArgument(
-                            new CodePrimitiveExpression(parameter.Index + 1)))
+                            new CodePrimitiveExpression(parameter.ProtoIndex)))
                 }
             };
 

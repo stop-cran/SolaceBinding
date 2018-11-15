@@ -7,7 +7,11 @@ namespace Solace.Channels
 {
     public class SolaceTransportBindingElement : TransportBindingElement
     {
-        public SolaceTransportBindingElement() : base() { }
+        public SolaceTransportBindingElement() : base()
+        {
+            cache = new Lazy<SolaceEndpointCache>(() =>
+                new SolaceEndpointCache(VPN, UserName, Password, ReplySessionCount, (sender, e) => RaiseSessionEvent(e)));
+        }
 
         public SolaceTransportBindingElement(SolaceTransportBindingElement other)
             : base(other)
@@ -16,6 +20,7 @@ namespace Solace.Channels
             UserName = other.UserName;
             Password = other.Password;
             SessionEvent += other.SessionEvent;
+            cache = other.cache;
         }
 
         public override string Scheme
@@ -23,11 +28,17 @@ namespace Solace.Channels
             get { return "solace.net"; }
         }
 
+        readonly Lazy<SolaceEndpointCache> cache;
+
+        internal SolaceEndpointCache EndpointCache { get { return cache.Value; } }
+
         public string VPN { get; set; }
 
         public string UserName { get; set; }
 
         public string Password { get; set; }
+
+        public int ReplySessionCount { get; set; }
 
         public event EventHandler<SessionEventArgs> SessionEvent;
 

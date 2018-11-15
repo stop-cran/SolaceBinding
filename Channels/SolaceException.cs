@@ -5,8 +5,8 @@ namespace Solace.Channels
 {
     public class SolaceException : Exception
     {
-        public SolaceException(string message) { }
-        public SolaceException(string message, Exception innerException) { }
+        public SolaceException(string message) : base(message) { }
+        public SolaceException(string message, Exception innerException) : base(message, innerException) { }
     }
 
 

@@ -10,6 +10,8 @@ namespace Solace.Channels
 {
     public class ProtobufConverterFactory : IProtobufConverterFactory
     {
+        static readonly Dictionary<Tuple<IEnumerable<RequestParameter>, Type>, Type> cache =
+            new Dictionary<Tuple<IEnumerable<RequestParameter>, Type>, Type>(new OperationEqualityComparer());
         readonly IReadOnlyList<IValueConverter> converters;
 
         public ProtobufConverterFactory(IEnumerable<IValueConverter> converters)
@@ -21,6 +23,11 @@ namespace Solace.Channels
             IEnumerable<RequestParameter> parameters,
             Type returnType)
         {
+            Type result;
+
+            if (cache.TryGetValue(Tuple.Create(parameters, returnType), out result))
+                return (IProtobufConverter)Activator.CreateInstance(result, converters);
+
             try
             {
                 string name = CreateRandomConverterName();
@@ -59,8 +66,11 @@ namespace Solace.Channels
                             compilerResults.Errors.OfType<CompilerError>()
                                 .Select(error => error.ErrorText)));
 
-                return (IProtobufConverter)Activator.CreateInstance(
-                    compilerResults.CompiledAssembly.GetType($"DynamicClasses.{name}Converter"), converters);
+                var converterType = compilerResults.CompiledAssembly.GetType($"DynamicClasses.{name}Converter");
+
+                cache[Tuple.Create((IEnumerable<RequestParameter>)parameters.ToList().AsReadOnly(), returnType)] = converterType;
+
+                return (IProtobufConverter)Activator.CreateInstance(converterType, converters);
             }
             catch (Exception ex)
             {

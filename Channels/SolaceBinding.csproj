@@ -8,47 +8,13 @@
     <ProjectGuid>{D25559A9-5681-4578-8DA0-8EFEF7B8C41E}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>SolaceBinding</RootNamespace>
+    <RootNamespace>Solace.Channels</RootNamespace>
     <AssemblyName>SolaceBinding</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
-    <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\x64\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <DebugType>full</DebugType>
-    <PlatformTarget>x64</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
-    <OutputPath>bin\x64\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
-    <PlatformTarget>x64</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
-    <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\x86\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <DebugType>full</DebugType>
-    <PlatformTarget>x86</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x86'">
-    <OutputPath>bin\x86\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
-    <PlatformTarget>x86</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
     <DebugSymbols>true</DebugSymbols>
@@ -68,29 +34,21 @@
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
-  <ItemGroup Condition="'$(Platform)'=='x86'">
-    <Reference Include="SolaceSystems.Solclient.Messaging">
-      <HintPath>..\API\SolaceSystems.Solclient.Messaging.dll</HintPath>
-    </Reference>
-    <Content Include="..\API\libsolclient.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-  <ItemGroup Condition="'$(Platform)'=='x64'">
-    <Reference Include="SolaceSystems.Solclient.Messaging_64">
-      <HintPath>..\API\SolaceSystems.Solclient.Messaging_64.dll</HintPath>
-    </Reference>
-    <Content Include="..\API\libsolclient_64.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
   <ItemGroup>
-    <Reference Include="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\packages\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
+    <Reference Include="Newtonsoft.Json, Version=11.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.11.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="protobuf-net, Version=2.1.0.0, Culture=neutral, PublicKeyToken=257b51d87d2e4d67, processorArchitecture=MSIL">
-      <HintPath>..\packages\protobuf-net.2.1.0\lib\net451\protobuf-net.dll</HintPath>
+    <Reference Include="protobuf-net, Version=2.3.7.0, Culture=neutral, PublicKeyToken=257b51d87d2e4d67, processorArchitecture=MSIL">
+      <HintPath>..\packages\protobuf-net.2.3.7\lib\net40\protobuf-net.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="SolaceBinding.Attributes, Version=1.0.1.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\SolaceBinding.Attributes.1.0.1\lib\net461\SolaceBinding.Attributes.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="SolaceSystems.Solclient.Messaging, Version=10.1.2.0, Culture=neutral, PublicKeyToken=e191a36e57c23464, processorArchitecture=MSIL">
+      <HintPath>..\packages\SolaceSystems.Solclient.Messaging.10.1.2\lib\net20\SolaceSystems.Solclient.Messaging.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
@@ -107,35 +65,53 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AsyncResult.cs" />
+    <Compile Include="Behaviors\SolaceUserPropertyMapEndpointBehavior.cs" />
+    <Compile Include="Configuration\SolaceUserPropertyMapBehaviorExtensionElement.cs" />
     <Compile Include="IProtobufConverter.cs" />
     <Compile Include="IProtobufConverterFactory.cs" />
+    <Compile Include="ISolaceEndpoint.cs" />
     <Compile Include="IValueConverter.cs" />
+    <Compile Include="MessageConverters\IMessageConverter.cs" />
+    <Compile Include="MessageConverters\UserPropertyMapConverter.cs" />
+    <Compile Include="MessageConverters\TopicSuffixMessageConverter.cs" />
+    <Compile Include="MessageConverters\SdtMessageConverter.cs" />
+    <Compile Include="OperationEqualityComparer.cs" />
     <Compile Include="ProtobufConverterGenerator.cs" />
     <Compile Include="ProtobufConverterFactory.cs" />
+    <Compile Include="Formatters\SolaceSdtStreamContainerMessageFormatter.cs" />
+    <Compile Include="Configuration\SolaceSdtContainerBehaviorExtensionElement.cs" />
+    <Compile Include="Behaviors\SolaceSdtContainerEndpointBehavior.cs" />
+    <Compile Include="Behaviors\SolaceBinaryEndpointBehavior.cs" />
+    <Compile Include="Formatters\MessageFormatterBase.cs" />
+    <Compile Include="Formatters\SolaceBinaryMessageFormatter.cs" />
+    <Compile Include="Configuration\SolaceBinaryBehaviorExtensionElement.cs" />
+    <Compile Include="SolaceReplyEndpoint.cs" />
     <Compile Include="RequestParameter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RawBodyWriter.cs" />
     <Compile Include="SolaceBaseChannel.cs" />
+    <Compile Include="SolaceEndpointBase.cs" />
+    <Compile Include="SolaceEndpointCache.cs" />
     <Compile Include="SolaceJsonPassthroughErrorHandler.cs" />
     <Compile Include="SolaceJsonErrorHandler.cs" />
-    <Compile Include="SolaceProtobufBehaviorExtensionElement.cs" />
-    <Compile Include="SolaceJsonBehaviorExtensionElement.cs" />
-    <Compile Include="SolaceBindingExtensionElement.cs" />
+    <Compile Include="Configuration\SolaceProtobufBehaviorExtensionElement.cs" />
+    <Compile Include="Configuration\SolaceJsonBehaviorExtensionElement.cs" />
+    <Compile Include="Configuration\SolaceBindingExtensionElement.cs" />
     <Compile Include="SolaceChannelFactory.cs" />
     <Compile Include="SolaceChannelListener.cs" />
     <Compile Include="SolaceConstants.cs" />
     <Compile Include="SolaceEndpoint.cs" />
-    <Compile Include="SolaceProtobufEndpointBehavior.cs" />
-    <Compile Include="SolaceJsonEndpointBehavior.cs" />
+    <Compile Include="Behaviors\SolaceProtobufEndpointBehavior.cs" />
+    <Compile Include="Behaviors\SolaceJsonEndpointBehavior.cs" />
     <Compile Include="SolaceProtobufErrorHandler.cs" />
     <Compile Include="SolaceErrorHandler.cs" />
     <Compile Include="SolaceException.cs" />
     <Compile Include="SolaceExtensions.cs" />
     <Compile Include="MessageBinaryHelper.cs" />
-    <Compile Include="SolaceMessageFormatter.cs" />
+    <Compile Include="Formatters\SolaceMessageFormatter.cs" />
     <Compile Include="SolaceMessageInspector.cs" />
     <Compile Include="SolaceOperationSelector.cs" />
-    <Compile Include="SolaceProtobufMessageFormatter.cs" />
+    <Compile Include="Formatters\SolaceProtobufMessageFormatter.cs" />
     <Compile Include="SolaceReplyChannel.cs" />
     <Compile Include="SolaceRequestChannel.cs" />
     <Compile Include="SolaceRequestContext.cs" />
@@ -145,10 +121,18 @@
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>copy /b $(TargetPath) $(SolutionDir)nuget\$(PlatformName)\</PostBuildEvent>
+    <PostBuildEvent>copy /b $(TargetPath) C:\Users\r.konstantinovskiy\Documents\git\SB.Notifications\SB.Notifications.Service\bin\x86\Debug\</PostBuildEvent>
   </PropertyGroup>
+  <Import Project="..\packages\SolaceSystems.Solclient.Messaging.10.1.2\build\net20\SolaceSystems.Solclient.Messaging.targets" Condition="Exists('..\packages\SolaceSystems.Solclient.Messaging.10.1.2\build\net20\SolaceSystems.Solclient.Messaging.targets')" />
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\packages\SolaceSystems.Solclient.Messaging.10.1.2\build\net20\SolaceSystems.Solclient.Messaging.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\SolaceSystems.Solclient.Messaging.10.1.2\build\net20\SolaceSystems.Solclient.Messaging.targets'))" />
+  </Target>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

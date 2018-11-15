@@ -1,5 +1,4 @@
-﻿using SolaceSystems.Solclient.Messaging;
-using System;
+﻿using System;
 using System.ServiceModel;
 using System.ServiceModel.Channels;
 using System.Threading.Tasks;
@@ -10,19 +9,15 @@ namespace Solace.Channels
     {
         Uri via;
         EndpointAddress remoteAddress;
-        readonly string vpn, user, password;
-        readonly Action<SessionEventArgs> raiseSessionEvent;
+        readonly SolaceEndpointCache enpointCache;
 
         public SolaceRequestChannel(MessageEncoder encoder, BufferManager bufferManager, ChannelManagerBase channelManager, EndpointAddress remoteAddress, Uri via,
-            string vpn, string user, string password, Action<SessionEventArgs> raiseSessionEvent)
-            : base(encoder, bufferManager, channelManager)
+            SolaceEndpointCache enpointCache)
+            : base(encoder, bufferManager, channelManager, null)
         {
             this.via = via;
             this.remoteAddress = remoteAddress;
-            this.vpn = vpn;
-            this.user = user;
-            this.password = password;
-            this.raiseSessionEvent = raiseSessionEvent;
+            this.enpointCache = enpointCache;
         }
 
         public IAsyncResult BeginRequest(Message message, TimeSpan timeout, AsyncCallback callback, object state)
@@ -47,6 +42,12 @@ namespace Solace.Channels
 
         public Message Request(Message message, TimeSpan timeout)
         {
+            if (message.Properties.TryGetValue(SolaceConstants.IsOneWayKey) as bool? ?? false)
+            {
+                base.SendMessage(message, timeout);
+                return null;
+            }
+
             return base.SendRequestMessage(message, timeout);
         }
 
@@ -78,7 +79,7 @@ namespace Solace.Channels
 
         void Connect()
         {
-            var endpoint = new SolaceEndpoint(Via, vpn, user, password, (sender, args) => raiseSessionEvent(args));
+            var endpoint = enpointCache.Create(Via);
             endpoint.Connect();
 
             base.InitializeSolaceEndpoint(endpoint);

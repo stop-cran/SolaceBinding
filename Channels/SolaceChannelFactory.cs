@@ -1,5 +1,4 @@
-﻿using SolaceSystems.Solclient.Messaging;
-using System;
+﻿using System;
 using System.Collections.ObjectModel;
 using System.ServiceModel;
 using System.ServiceModel.Channels;
@@ -10,16 +9,12 @@ namespace Solace.Channels
     {
         BufferManager bufferManager;
         MessageEncoderFactory encoderFactory;
-        string vpn, user, password;
-        readonly Action<SessionEventArgs> raiseSessionEvent;
+        readonly SolaceEndpointCache enpointCache;
 
         public SolaceChannelFactory(SolaceTransportBindingElement bindingElement, BindingContext context)
             : base(context.Binding)
         {
-            vpn = bindingElement.VPN;
-            user = bindingElement.UserName;
-            password = bindingElement.Password;
-            raiseSessionEvent = bindingElement.RaiseSessionEvent;
+            enpointCache = bindingElement.EndpointCache;
 
             // populate members from binding element
             int maxBufferSize = (int)bindingElement.MaxReceivedMessageSize;
@@ -55,7 +50,7 @@ namespace Solace.Channels
                 this, 
                 address, 
                 via,
-                vpn, user, password, raiseSessionEvent);
+                enpointCache);
         }
 
         protected override IAsyncResult OnBeginOpen(TimeSpan timeout, AsyncCallback callback, object state)
