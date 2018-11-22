@@ -5,7 +5,7 @@ namespace Solace.Channels
 {
     public interface ISolaceEndpoint
     {
-        Uri RemoteEndPoint { get; }
+        Uri RemoteEndpoint { get; }
 
         string SubscribedTopic { get; }
 

@@ -1,10 +1,10 @@
-﻿using System;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
+using System;
 using System.IO;
 
 namespace Solace.Channels
 {
-    class SolaceJsonPassthroughErrorHandler : SolaceJsonErrorHandler
+    internal class SolaceJsonPassthroughErrorHandler : SolaceJsonErrorHandler
     {
         public override bool HandleError(Exception error)
         {

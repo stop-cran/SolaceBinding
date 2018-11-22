@@ -6,13 +6,14 @@
     <ApplicationIcon />
     <StartupObject />
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>1.5.0</Version>
+    <Version>1.5.1</Version>
     <Authors>stop-cran &lt;stop-cran@list.ru&gt;</Authors>
-    <Description>Allows to use WCF over Solace messaging platform with JSON message format.</Description>
+    <Description>Allows to use WCF over Solace messaging platform with JSON and protobuf message formats.</Description>
     <Copyright>Copyright © stop-cran, 2016-2018</Copyright>
     <PackageProjectUrl>https://github.com/stop-cran/SolaceBinding</PackageProjectUrl>
     <RepositoryUrl>https://github.com/stop-cran/SolaceBinding</RepositoryUrl>
     <PackageTags>WCF Solace Messaging</PackageTags>
+    <PackageReleaseNotes>Added ClientNameSuffix, better diagnostics, code cleanup.</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>

@@ -1,23 +1,22 @@
-﻿using System;
-using System.ServiceModel.Channels;
-using System.Threading.Tasks;
-using SolaceSystems.Solclient.Messaging;
-using System.Text;
-using Newtonsoft.Json.Linq;
-using SolaceSystems.Solclient.Messaging.SDT;
-using System.Collections.Generic;
+﻿using Newtonsoft.Json.Linq;
 using Solace.Channels.MessageConverters;
+using SolaceSystems.Solclient.Messaging;
+using System;
+using System.Collections.Generic;
+using System.ServiceModel.Channels;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace Solace.Channels
 {
-    class SolaceBaseChannel : ChannelBase
+    internal class SolaceBaseChannel : ChannelBase
     {
-        const int maxBufferSize = 1024 * 1024;
+        private const int maxBufferSize = 1024 * 1024;
 
-        ISolaceEndpoint endpoint;
-        MessageEncoder encoder;
-        BufferManager bufferManager;
-        readonly IEnumerable<IMessageConverter> converters;
+        private ISolaceEndpoint endpoint;
+        private MessageEncoder encoder;
+        private BufferManager bufferManager;
+        private readonly IEnumerable<IMessageConverter> converters;
 
         public SolaceBaseChannel(MessageEncoder encoder, BufferManager bufferManager, ChannelManagerBase channelManager, IEnumerable<IMessageConverter> converters)
             : base(channelManager)
@@ -30,16 +29,14 @@ namespace Solace.Channels
         protected virtual void InitializeSolaceEndpoint(ISolaceEndpoint endpoint)
         {
             if (this.endpoint != null)
-            {
                 throw new InvalidOperationException("SolaceEndpoint is already set");
-            }
 
             this.endpoint = endpoint;
         }
 
-        Message SendEncodedRequestMessage(ArraySegment<byte> encodedBytes, string applicationMessageType, string senderId, string topicSuffix, TimeSpan timeout)
+        private Message SendEncodedRequestMessage(ArraySegment<byte> encodedBytes, string applicationMessageType, string senderId, string topicSuffix, TimeSpan timeout)
         {
-            base.ThrowIfDisposedOrNotOpen();
+            ThrowIfDisposedOrNotOpen();
 
             try
             {
@@ -50,13 +47,13 @@ namespace Solace.Channels
             finally
             {
                 if (encodedBytes.Array != null)
-                    this.bufferManager.ReturnBuffer(encodedBytes.Array);
+                    bufferManager.ReturnBuffer(encodedBytes.Array);
             }
         }
 
-        void SendEncodedMessage(ArraySegment<byte> encodedBytes, string correlationId, string applicationMessageType, string senderId, string topicSuffix)
+        private void SendEncodedMessage(ArraySegment<byte> encodedBytes, string correlationId, string applicationMessageType, string senderId, string topicSuffix)
         {
-            base.ThrowIfDisposedOrNotOpen();
+            ThrowIfDisposedOrNotOpen();
 
             try
             {
@@ -65,13 +62,14 @@ namespace Solace.Channels
             finally
             {
                 if (encodedBytes.Array != null)
-                    this.bufferManager.ReturnBuffer(encodedBytes.Array);
+                    bufferManager.ReturnBuffer(encodedBytes.Array);
             }
         }
 
-        void SendEncodedReplyMessage(IDestination destination, string correlationId, string applicationMessageType, ArraySegment<byte> encodedBytes, TimeSpan timeout)
+        private void SendEncodedReplyMessage(IDestination destination, string correlationId, string applicationMessageType, ArraySegment<byte> encodedBytes, TimeSpan timeout)
         {
-            base.ThrowIfDisposedOrNotOpen();
+            ThrowIfDisposedOrNotOpen();
+
             try
             {
                 endpoint.SendReply(destination, correlationId, applicationMessageType, encodedBytes);
@@ -79,7 +77,7 @@ namespace Solace.Channels
             finally
             {
                 if (encodedBytes.Array != null)
-                    this.bufferManager.ReturnBuffer(encodedBytes.Array);
+                    bufferManager.ReturnBuffer(encodedBytes.Array);
             }
         }
 
@@ -90,7 +88,7 @@ namespace Solace.Channels
             var senderId = (string)message.Properties.TryGetValue(SolaceConstants.SenderIdKey);
             var topicSuffix = (string)message.Properties.TryGetValue(SolaceConstants.TopicSuffixKey);
 
-            SendEncodedMessage(this.EncodeMessage(message), correlationId, applicationMessageType, senderId, topicSuffix);
+            SendEncodedMessage(EncodeMessage(message), correlationId, applicationMessageType, senderId, topicSuffix);
         }
 
         public Message SendRequestMessage(Message message, TimeSpan timeout)
@@ -99,17 +97,18 @@ namespace Solace.Channels
             var topicSuffix = (string)message.Properties.TryGetValue(SolaceConstants.TopicSuffixKey);
             var senderId = (string)message.Properties.TryGetValue(SolaceConstants.SenderIdKey);
 
-            return SendEncodedRequestMessage(this.EncodeMessage(message), applicationMessageType, senderId, topicSuffix, timeout);
+            return SendEncodedRequestMessage(EncodeMessage(message), applicationMessageType, senderId, topicSuffix, timeout);
         }
 
         internal void SendReply(IDestination destination, string correlationId, Message reply, TimeSpan timeout)
         {
-            SendEncodedReplyMessage(destination, correlationId, (string)reply.Properties[SolaceConstants.ApplicationMessageTypeKey], this.EncodeMessage(reply), timeout);
+            SendEncodedReplyMessage(destination, correlationId, (string)reply.Properties[SolaceConstants.ApplicationMessageTypeKey], EncodeMessage(reply), timeout);
         }
 
         public IAsyncResult BeginSendMessage(Message message, TimeSpan timeout, AsyncCallback callback, object state)
         {
-            base.ThrowIfDisposedOrNotOpen();
+            ThrowIfDisposedOrNotOpen();
+
             var encodedMessage = this.EncodeMessage(message);
             var applicationMessageType = (string)message.Properties[SolaceConstants.ApplicationMessageTypeKey];
             var topicSuffix = (string)message.Properties.TryGetValue(SolaceConstants.TopicSuffixKey);
@@ -118,17 +117,13 @@ namespace Solace.Channels
             return TaskHelper.CreateTask(() => SendEncodedRequestMessage(encodedMessage, applicationMessageType, senderId, topicSuffix, timeout), callback, state);
         }
 
-        public IAsyncResult BeginSendMessage(Message message, AsyncCallback callback, object state)
-        {
-            return this.BeginSendMessage(message, this.DefaultSendTimeout, callback, state);
-        }
+        public IAsyncResult BeginSendMessage(Message message, AsyncCallback callback, object state) =>
+            BeginSendMessage(message, this.DefaultSendTimeout, callback, state);
 
-        public void EndSendMessage(IAsyncResult result)
-        {
+        public void EndSendMessage(IAsyncResult result) =>
             ((Task)result).Wait();
-        }
 
-        ArraySegment<byte> EncodeMessage(Message message)
+        private ArraySegment<byte> EncodeMessage(Message message)
         {
             try
             {
@@ -157,12 +152,11 @@ namespace Solace.Channels
 
                 string json = new JObject
                 {
-                    {"error", new JObject
+                    { "error", new JObject
                         {
                             { "type", typeof(ArgumentException).FullName },
                             { "message", error },
-                        }
-                    }
+                        } }
                 }.ToString();
                 int length = Encoding.UTF8.GetByteCount(json);
                 var buffer = bufferManager.TakeBuffer(length);
@@ -229,10 +223,8 @@ namespace Solace.Channels
             return TaskHelper.CreateTask(() => ReceiveMessage(timeout), callback, state);
         }
 
-        public Message EndReceiveMessage(IAsyncResult result)
-        {
-            return ((Task<Message>)result).Result;
-        }
+        public Message EndReceiveMessage(IAsyncResult result) =>
+            ((Task<Message>)result).Result;
 
         protected virtual Message DecodeMessage(IMessage data)
         {
@@ -250,40 +242,31 @@ namespace Solace.Channels
             }
         }
 
-        protected override void OnAbort()
-        {
-            if (this.endpoint != null)
-            {
-                endpoint.Close(0);
-            }
-        }
+        protected override void OnAbort() =>
+            endpoint?.Close(0);
 
         protected override IAsyncResult OnBeginClose(TimeSpan timeout, AsyncCallback callback, object state)
         {
-            this.OnClose(timeout);
+            OnClose(timeout);
+
             return new CompletedAsyncResult(callback, state);
         }
 
         protected override IAsyncResult OnBeginOpen(TimeSpan timeout, AsyncCallback callback, object state)
         {
-            this.OnOpen(timeout);
+            OnOpen(timeout);
+
             return new CompletedAsyncResult(callback, state);
         }
 
-        protected override void OnClose(TimeSpan timeout)
-        {
-            this.endpoint.Close((int)timeout.TotalMilliseconds);
-        }
+        protected override void OnClose(TimeSpan timeout) =>
+            endpoint.Close((int)timeout.TotalMilliseconds);
 
-        protected override void OnEndClose(IAsyncResult result)
-        {
+        protected override void OnEndClose(IAsyncResult result) =>
             CompletedAsyncResult.End(result);
-        }
 
-        protected override void OnEndOpen(IAsyncResult result)
-        {
+        protected override void OnEndOpen(IAsyncResult result) =>
             CompletedAsyncResult.End(result);
-        }
 
         protected override void OnOpen(TimeSpan timeout)
         {

@@ -7,12 +7,12 @@ using System.Reflection;
 
 namespace Solace.Channels
 {
-    static class ProtobufConverterGenerator
+    internal static class ProtobufConverterGenerator
     {
-        const string convertersFieldName = "converters";
-        const string objParameterName = "obj";
-        const string parametersName = "parameters";
-        const string castedObjName = "castedObj";
+        private const string convertersFieldName = "converters";
+        private const string objParameterName = "obj";
+        private const string parametersName = "parameters";
+        private const string castedObjName = "castedObj";
 
         public static CodeCompileUnit Create(
             string _namespace, string contractName, string converterName,
@@ -45,7 +45,7 @@ namespace Solace.Channels
             }
         }
 
-        static CodeTypeDeclaration GenerateContractClass(string name, IEnumerable<RequestParameter> parameters,
+        private static CodeTypeDeclaration GenerateContractClass(string name, IEnumerable<RequestParameter> parameters,
             IReadOnlyList<IValueConverter> converters)
         {
             var contract = new CodeTypeDeclaration(name)
@@ -59,17 +59,16 @@ namespace Solace.Channels
             };
 
             contract.Members.AddRange((from parameter in parameters
-                                      where !parameter.IsFromProperty
-                                      select GenerateProperty(parameter,
-                                        converters.SingleOrDefault(converter =>
-                                            converter.CanConvert(parameter.Type))
-                                                ?.ConvertedType))
-                .ToArray());
+                                       where !parameter.IsFromProperty
+                                       select GenerateProperty(parameter,
+                                         converters.SingleOrDefault(converter =>
+                                             converter.CanConvert(parameter.Type))
+                                                 ?.ConvertedType)).ToArray());
 
             return contract;
         }
 
-        static CodeTypeDeclaration GenerateConverterClass(string name, string contractName,
+        private static CodeTypeDeclaration GenerateConverterClass(string name, string contractName,
             IEnumerable<RequestParameter> parameters,
             Type returnType, IReadOnlyList<IValueConverter> converters)
         {
@@ -124,7 +123,7 @@ namespace Solace.Channels
             };
         }
 
-        static CodeTypeMember GenerateProperty(RequestParameter parameter, Type convertedType)
+        private static CodeTypeMember GenerateProperty(RequestParameter parameter, Type convertedType)
         {
             var field = new CodeMemberField
             {
@@ -145,7 +144,7 @@ namespace Solace.Channels
             return field;
         }
 
-        static CodeTypeMember GenerateToObjectMethod(string type, IEnumerable<RequestParameter> parameters,
+        private static CodeTypeMember GenerateToObjectMethod(string type, IEnumerable<RequestParameter> parameters,
             IReadOnlyList<IValueConverter> converters)
         {
             var method = new CodeMemberMethod
@@ -207,10 +206,9 @@ namespace Solace.Channels
                         : parameterIndex));
         }
 
-        static CodeTypeMember GenerateFromObjectMethod(string type, IEnumerable<RequestParameter> parameters,
+        private static CodeTypeMember GenerateFromObjectMethod(string type, IEnumerable<RequestParameter> parameters,
             IReadOnlyList<IValueConverter> converters)
         {
-
             var method = new CodeMemberMethod
             {
                 Name = "FromObject",
@@ -242,13 +240,14 @@ namespace Solace.Channels
             return method;
         }
 
-        static CodeAssignStatement GenerateConvertBackStatement(RequestParameter parameter, int? converterIndex)
+        private static CodeAssignStatement GenerateConvertBackStatement(RequestParameter parameter, int? converterIndex)
         {
             var parametersReference = new CodeVariableReferenceExpression(parametersName);
             var castedOObjReference = new CodeVariableReferenceExpression(castedObjName);
 
             CodeExpression propertyReference = new CodePropertyReferenceExpression(
-                                    castedOObjReference, parameter.Name);
+                castedOObjReference, parameter.Name);
+
             return new CodeAssignStatement(
                                 new CodeArrayIndexerExpression(
                                     parametersReference,

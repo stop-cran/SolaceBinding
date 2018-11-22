@@ -1,14 +1,14 @@
-﻿using System;
-using System.ServiceModel.Description;
+﻿using Newtonsoft.Json;
+using System;
 using System.ServiceModel.Channels;
+using System.ServiceModel.Description;
 using System.ServiceModel.Dispatcher;
-using Newtonsoft.Json;
 
 namespace Solace.Channels
 {
     public class SolaceJsonEndpointBehavior : IEndpointBehavior
     {
-        readonly Func<JsonSerializerSettings> settingsProvider;
+        private readonly Func<JsonSerializerSettings> settingsProvider;
 
         public SolaceJsonEndpointBehavior()
         {

@@ -1,6 +1,6 @@
 ﻿namespace Solace.Channels
 {
-    static class SolaceConstants
+    internal static class SolaceConstants
     {
         public const string ReplyToKey = "SolaceReplyTo";
         public const string CorrelationIdKey = "CorrelationId";

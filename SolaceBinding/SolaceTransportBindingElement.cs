@@ -7,10 +7,15 @@ namespace Solace.Channels
 {
     public class SolaceTransportBindingElement : TransportBindingElement
     {
+        private readonly Lazy<SolaceEndpointCache> cache;
+
         public SolaceTransportBindingElement() : base()
         {
             cache = new Lazy<SolaceEndpointCache>(() =>
-                new SolaceEndpointCache(VPN, UserName, Password, ReplySessionCount, (sender, e) => RaiseSessionEvent(e)));
+                new SolaceEndpointCache(VPN, UserName, Password,
+                    ReplySessionCount,
+                    ClientNameSuffix,
+                    (sender, e) => RaiseSessionEvent(e)));
         }
 
         public SolaceTransportBindingElement(SolaceTransportBindingElement other)
@@ -23,14 +28,9 @@ namespace Solace.Channels
             cache = other.cache;
         }
 
-        public override string Scheme
-        {
-            get { return "solace.net"; }
-        }
+        public override string Scheme => "solace.net";
 
-        readonly Lazy<SolaceEndpointCache> cache;
-
-        internal SolaceEndpointCache EndpointCache { get { return cache.Value; } }
+        internal SolaceEndpointCache EndpointCache => cache.Value;
 
         public string VPN { get; set; }
 
@@ -40,44 +40,32 @@ namespace Solace.Channels
 
         public int ReplySessionCount { get; set; }
 
+        public string ClientNameSuffix { get; set; }
+
         public event EventHandler<SessionEventArgs> SessionEvent;
 
-        public override BindingElement Clone()
-        {
-            return new SolaceTransportBindingElement(this);
-        }
+        public override BindingElement Clone() =>
+            new SolaceTransportBindingElement(this);
 
-        internal void RaiseSessionEvent(SessionEventArgs args)
-        {
+        internal void RaiseSessionEvent(SessionEventArgs args) =>
             Volatile.Read(ref SessionEvent)?.Invoke(this, args);
-        }
 
-        public override bool CanBuildChannelFactory<TChannel>(BindingContext context)
-        {
-            return typeof(TChannel) == typeof(IRequestChannel);
-        }
+        public override bool CanBuildChannelFactory<TChannel>(BindingContext context) =>
+            typeof(TChannel) == typeof(IRequestChannel);
 
-        public override IChannelFactory<TChannel> BuildChannelFactory<TChannel>(BindingContext context)
-        {
-            return (IChannelFactory<TChannel>)(object)new SolaceChannelFactory(this, context);
-        }
+        public override IChannelFactory<TChannel> BuildChannelFactory<TChannel>(BindingContext context) =>
+            (IChannelFactory<TChannel>)(object)new SolaceChannelFactory(this, context);
 
-        public override bool CanBuildChannelListener<TChannel>(BindingContext context)
-        {
-            return typeof(TChannel) == typeof(IReplyChannel);
-        }
+        public override bool CanBuildChannelListener<TChannel>(BindingContext context) =>
+            typeof(TChannel) == typeof(IReplyChannel);
 
-        public override IChannelListener<TChannel> BuildChannelListener<TChannel>(BindingContext context)
-        {
-            return (IChannelListener<TChannel>)(object)new SolaceChannelListener(this, context);
-        }
+        public override IChannelListener<TChannel> BuildChannelListener<TChannel>(BindingContext context) =>
+            (IChannelListener<TChannel>)(object)new SolaceChannelListener(this, context);
 
         public override T GetProperty<T>(BindingContext context)
         {
             if (typeof(T) == typeof(MessageVersion))
-            {
                 return (T)(object)MessageVersion.None;
-            }
 
             return base.GetProperty<T>(context);
         }

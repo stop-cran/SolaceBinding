@@ -8,7 +8,7 @@ using System.Reflection;
 
 namespace Solace.Channels
 {
-    static class ProtobufConverterRepository
+    internal static class ProtobufConverterRepository
     {
         public static IProtobufConverter Create(
             IEnumerable<RequestParameter> parameters,
@@ -63,17 +63,16 @@ namespace Solace.Channels
             }
         }
 
-        static string CreateRandomConverterName()
+        private static string CreateRandomConverterName()
         {
             var r = new Random();
 
             return new string(Enumerable.Range(0, 10)
                 .Select(i => (char)('a' + r.Next(25)))
                 .ToArray());
-
         }
 
-        static IEnumerable<Type> GetReferencedTypes(Type t)
+        private static IEnumerable<Type> GetReferencedTypes(Type t)
         {
             if (t.IsGenericType)
                 foreach (var type in from argument in t.GetGenericArguments()

@@ -1,36 +1,32 @@
-﻿using System;
-using System.ServiceModel.Channels;
-using System.ServiceModel;
-using System.Threading.Tasks;
+﻿using Solace.Channels.MessageConverters;
 using SolaceSystems.Solclient.Messaging;
+using System;
 using System.Collections.Generic;
-using Solace.Channels.MessageConverters;
+using System.ServiceModel;
+using System.ServiceModel.Channels;
+using System.Threading.Tasks;
 
 namespace Solace.Channels
 {
-    class SolaceReplyChannel : SolaceBaseChannel, IReplyChannel
+    internal class SolaceReplyChannel : SolaceBaseChannel, IReplyChannel
     {
-        Uri localAddress;
-        ISolaceEndpoint endpoint;
-        bool began;
+        private Uri localAddress;
+        private ISolaceEndpoint endpoint;
+        private bool began;
 
         public SolaceReplyChannel(MessageEncoder encoder, BufferManager bufferManager, Uri localAddress, ISolaceEndpoint endpoint, ChannelManagerBase channelManager, IEnumerable<IMessageConverter> converters)
             : base(encoder, bufferManager, channelManager, converters)
         {
             this.localAddress = localAddress;
             this.endpoint = endpoint;
-            this.InitializeSolaceEndpoint(endpoint);
+            InitializeSolaceEndpoint(endpoint);
         }
 
-        public IAsyncResult BeginReceiveRequest(TimeSpan timeout, AsyncCallback callback, object state)
-        {
-            return BeginReceiveMessage(timeout, callback, state);
-        }
+        public IAsyncResult BeginReceiveRequest(TimeSpan timeout, AsyncCallback callback, object state) =>
+            BeginReceiveMessage(timeout, callback, state);
 
-        public IAsyncResult BeginReceiveRequest(AsyncCallback callback, object state)
-        {
-            return this.BeginReceiveRequest(this.DefaultReceiveTimeout, callback, state);
-        }
+        public IAsyncResult BeginReceiveRequest(AsyncCallback callback, object state) =>
+            BeginReceiveRequest(this.DefaultReceiveTimeout, callback, state);
 
         public IAsyncResult BeginTryReceiveRequest(TimeSpan timeout, AsyncCallback callback, object state)
         {
@@ -47,12 +43,8 @@ namespace Solace.Channels
             throw new NotSupportedException("No peeking support");
         }
 
-        public RequestContext EndReceiveRequest(IAsyncResult result)
-        {
-            var res = new SolaceRequestContext(this, ((Task<Message>)result).Result, TimeSpan.MaxValue);
-
-            return res;
-        }
+        public RequestContext EndReceiveRequest(IAsyncResult result) =>
+            new SolaceRequestContext(this, ((Task<Message>)result).Result, TimeSpan.MaxValue);
 
         public bool EndTryReceiveRequest(IAsyncResult result, out RequestContext context)
         {
@@ -74,28 +66,19 @@ namespace Solace.Channels
             throw new NotSupportedException("No peeking support");
         }
 
-        public EndpointAddress LocalAddress
-        {
-            get { return new EndpointAddress(this.localAddress); }
-        }
+        public EndpointAddress LocalAddress => new EndpointAddress(localAddress);
 
-        public RequestContext ReceiveRequest(TimeSpan timeout)
-        {
-            var request = this.ReceiveMessage(timeout);
+        public RequestContext ReceiveRequest(TimeSpan timeout) =>
+            new SolaceRequestContext(this, ReceiveMessage(timeout), timeout);
 
-            return new SolaceRequestContext(this, request, timeout);
-        }
-
-        public RequestContext ReceiveRequest()
-        {
-            return this.ReceiveRequest(this.DefaultReceiveTimeout);
-        }
+        public RequestContext ReceiveRequest() =>
+            ReceiveRequest(this.DefaultReceiveTimeout);
 
         public bool TryReceiveRequest(TimeSpan timeout, out RequestContext context)
         {
             try
             {
-                context = this.ReceiveRequest(timeout);
+                context = ReceiveRequest(timeout);
                 return true;
             }
             catch (TimeoutException)
@@ -116,9 +99,11 @@ namespace Solace.Channels
 
             if (result != null)
             {
-                result.Headers.To = this.localAddress;
-                Uri remoteEndpoint = endpoint.RemoteEndPoint;
-                RemoteEndpointMessageProperty property = new RemoteEndpointMessageProperty(remoteEndpoint.ToString(), remoteEndpoint.Port == -1 ? 55555 : remoteEndpoint.Port);
+                result.Headers.To = localAddress;
+                Uri remoteEndpoint = endpoint.RemoteEndpoint;
+
+                var property = new RemoteEndpointMessageProperty(remoteEndpoint.ToString(), remoteEndpoint.Port == -1 ? 55555 : remoteEndpoint.Port);
+
                 result.Properties.Add(RemoteEndpointMessageProperty.Name, property);
             }
 

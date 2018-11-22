@@ -1,15 +1,15 @@
 ﻿using System;
-using System.ServiceModel.Description;
-using System.ServiceModel.Channels;
-using System.ServiceModel.Dispatcher;
 using System.Collections.Generic;
 using System.Linq;
+using System.ServiceModel.Channels;
+using System.ServiceModel.Description;
+using System.ServiceModel.Dispatcher;
 
 namespace Solace.Channels
 {
     public class SolaceProtobufEndpointBehavior : IEndpointBehavior
     {
-        readonly IProtobufConverterFactory converterFactory;
+        private readonly IProtobufConverterFactory converterFactory;
 
         public SolaceProtobufEndpointBehavior()
         {
@@ -21,9 +21,7 @@ namespace Solace.Channels
             this.converterFactory = converterFactory;
         }
 
-        public virtual void AddBindingParameters(ServiceEndpoint endpoint, BindingParameterCollection bindingParameters)
-        {
-        }
+        public virtual void AddBindingParameters(ServiceEndpoint endpoint, BindingParameterCollection bindingParameters) { }
 
         public virtual void ApplyClientBehavior(ServiceEndpoint endpoint, ClientRuntime clientRuntime)
         {
@@ -58,10 +56,6 @@ namespace Solace.Channels
                 }
         }
 
-        public virtual void Validate(ServiceEndpoint endpoint)
-        {
-            if (endpoint.Contract.Operations.Any(operation => operation.IsOneWay))
-                throw new InvalidOperationException("One-way operations not supported in this implementation");
-        }
+        public virtual void Validate(ServiceEndpoint endpoint) { }
     }
 }

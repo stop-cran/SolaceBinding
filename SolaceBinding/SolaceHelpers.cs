@@ -1,13 +1,13 @@
-﻿using System;
-using System.ServiceModel.Description;
-using System.ServiceModel.Channels;
-using System.IO;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using Solace.Utils;
+using System;
+using System.IO;
+using System.ServiceModel.Channels;
+using System.ServiceModel.Description;
 
 namespace Solace.Channels
 {
-    static class SolaceHelpers
+    internal static class SolaceHelpers
     {
         public static bool IsUntypedMessage(OperationDescription operation)
         {
@@ -15,18 +15,18 @@ namespace Solace.Channels
             {
                 case 1:
                     return operation.Messages[0].Body.Parts[0].Type == typeof(Message);
+
                 case 0:
                     Type returnType = operation.Messages[1].Body.ReturnValue.Type;
                     return returnType == typeof(void) || returnType == typeof(Message);
+
                 default:
                     return false;
             }
         }
 
-        public static Message SerializeMessage(byte[] body)
-        {
-            return Message.CreateMessage(MessageVersion.None, null, new RawBodyWriter(body));
-        }
+        public static Message SerializeMessage(byte[] body) =>
+            Message.CreateMessage(MessageVersion.None, null, new RawBodyWriter(body));
 
         public static JsonTextReader DeserializeMessage(Message message)
         {

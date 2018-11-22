@@ -1,7 +1,7 @@
 ﻿using System;
-using System.ServiceModel.Dispatcher;
-using System.ServiceModel.Channels;
 using System.IO;
+using System.ServiceModel.Channels;
+using System.ServiceModel.Dispatcher;
 
 namespace Solace.Channels
 {
@@ -33,7 +33,7 @@ namespace Solace.Channels
                 fault = message;
             }
         }
-        
+
         protected abstract void WriteException(Exception error, Stream stream, string action);
     }
 }

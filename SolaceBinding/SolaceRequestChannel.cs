@@ -5,61 +5,45 @@ using System.Threading.Tasks;
 
 namespace Solace.Channels
 {
-    class SolaceRequestChannel : SolaceBaseChannel, IRequestChannel
+    internal class SolaceRequestChannel : SolaceBaseChannel, IRequestChannel
     {
-        Uri via;
-        EndpointAddress remoteAddress;
-        readonly SolaceEndpointCache enpointCache;
+        private readonly SolaceEndpointCache enpointCache;
 
         public SolaceRequestChannel(MessageEncoder encoder, BufferManager bufferManager, ChannelManagerBase channelManager, EndpointAddress remoteAddress, Uri via,
             SolaceEndpointCache enpointCache)
             : base(encoder, bufferManager, channelManager, null)
         {
-            this.via = via;
-            this.remoteAddress = remoteAddress;
+            Via = via;
+            RemoteAddress = remoteAddress;
             this.enpointCache = enpointCache;
         }
 
-        public IAsyncResult BeginRequest(Message message, TimeSpan timeout, AsyncCallback callback, object state)
-        {
-            return TaskHelper.CreateTask(() => Request(message, timeout), callback, state);
-        }
+        public IAsyncResult BeginRequest(Message message, TimeSpan timeout, AsyncCallback callback, object state) =>
+            TaskHelper.CreateTask(() => Request(message, timeout), callback, state);
 
-        public IAsyncResult BeginRequest(Message message, AsyncCallback callback, object state)
-        {
-            return BeginRequest(message, DefaultSendTimeout, callback, state);
-        }
+        public IAsyncResult BeginRequest(Message message, AsyncCallback callback, object state) =>
+            BeginRequest(message, DefaultSendTimeout, callback, state);
 
-        public Message EndRequest(IAsyncResult result)
-        {
-            return (result as Task<Message>)?.Result;
-        }
+        public Message EndRequest(IAsyncResult result) =>
+            (result as Task<Message>)?.Result;
 
-        public EndpointAddress RemoteAddress
-        {
-            get { return remoteAddress; }
-        }
+        public EndpointAddress RemoteAddress { get; }
 
         public Message Request(Message message, TimeSpan timeout)
         {
             if (message.Properties.TryGetValue(SolaceConstants.IsOneWayKey) as bool? ?? false)
             {
-                base.SendMessage(message, timeout);
+                SendMessage(message, timeout);
                 return null;
             }
 
-            return base.SendRequestMessage(message, timeout);
+            return SendRequestMessage(message, timeout);
         }
 
-        public Message Request(Message message)
-        {
-            return Request(message, DefaultSendTimeout);
-        }
+        public Message Request(Message message) =>
+            Request(message, DefaultSendTimeout);
 
-        public Uri Via
-        {
-            get { return via; }
-        }
+        public Uri Via { get; }
 
         protected override void OnOpen(TimeSpan timeout)
         {
@@ -67,17 +51,13 @@ namespace Solace.Channels
             base.OnOpen(timeout);
         }
 
-        protected override IAsyncResult OnBeginOpen(TimeSpan timeout, AsyncCallback callback, object state)
-        {
-            return TaskHelper.CreateTask(Connect, callback, state);
-        }
+        protected override IAsyncResult OnBeginOpen(TimeSpan timeout, AsyncCallback callback, object state) =>
+            TaskHelper.CreateTask(Connect, callback, state);
 
-        protected override void OnEndOpen(IAsyncResult result)
-        {
+        protected override void OnEndOpen(IAsyncResult result) =>
             ((Task)result).Wait();
-        }
 
-        void Connect()
+        private void Connect()
         {
             var endpoint = enpointCache.Create(Via);
             endpoint.Connect();

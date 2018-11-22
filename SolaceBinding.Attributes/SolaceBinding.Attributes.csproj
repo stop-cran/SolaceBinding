@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <TargetFrameworks>netcoreapp2.1;net461</TargetFrameworks>
+    <ApplicationIcon />
+    <StartupObject />
+    <Version>1.0.2</Version>
+    <Authors>stop-cran</Authors>
+    <Description>Customization attributes for SolaceBining.</Description>
+    <Copyright>Copyright © stop-cran, 2016-2018</Copyright>
+    <PackageLicenseUrl>https://www.apache.org/licenses/LICENSE-2.0</PackageLicenseUrl>
+    <PackageProjectUrl>https://github.com/stop-cran/SolaceBinding</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/stop-cran/SolaceBinding</RepositoryUrl>
+    <PackageReleaseNotes>Added .Net Standard 2.1 target</PackageReleaseNotes>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+  </PropertyGroup>
+</Project>

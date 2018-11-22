@@ -3,9 +3,10 @@ using System.Xml;
 
 namespace Solace.Utils
 {
-    class RawBodyWriter : BodyWriter
+    internal class RawBodyWriter : BodyWriter
     {
-        byte[] bytes;
+        private byte[] bytes;
+
         public RawBodyWriter(byte[] bytes)
             : base(true)
         {
@@ -15,7 +16,7 @@ namespace Solace.Utils
         protected override void OnWriteBodyContents(XmlDictionaryWriter writer)
         {
             writer.WriteStartElement("Binary");
-            writer.WriteBase64(this.bytes, 0, this.bytes.Length);
+            writer.WriteBase64(bytes, 0, bytes.Length);
             writer.WriteEndElement();
         }
     }

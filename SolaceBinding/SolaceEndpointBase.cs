@@ -9,16 +9,16 @@ namespace Solace.Channels
 
         public SolaceEndpointBase(Uri address)
         {
-            RemoteEndPoint = address;
+            RemoteEndpoint = address;
             SubscribedTopic = address.AbsolutePath.Replace("%3E", ">").TrimStart('/');
-            topic = ContextFactory.Instance.CreateTopic(this.SubscribedTopic);
+            Topic = ContextFactory.Instance.CreateTopic(SubscribedTopic);
         }
 
-        protected ITopic topic { get; private set; }
+        protected ITopic Topic { get; }
 
-        protected ISession session { get; set; }
+        protected ISession Session { get; set; }
 
-        public Uri RemoteEndPoint { get; private set; }
+        public Uri RemoteEndpoint { get; }
 
         public string SubscribedTopic { get; }
 
@@ -28,12 +28,14 @@ namespace Solace.Channels
 
         public void Connect()
         {
-            session.Connect().EnsureSuccess();
+            Session.Connect()
+                .EnsureSuccess("Failed to connect session", Session.Properties);
+
             Connected = true;
         }
 
         public void Close() =>
-            Close(session.Properties.ConnectTimeoutInMsecs);
+            Close(Session.Properties.ConnectTimeoutInMsecs);
 
         public virtual void Close(int timeout)
         {
@@ -52,15 +54,16 @@ namespace Solace.Channels
         public void SendReply(IDestination destination, string correlationId, string applicationMessageType, byte[] buffer)
         {
             if (buffer != null)
-                using (var message = session.CreateMessage())
-                using (var message2 = session.CreateMessage())
+                using (var message = Session.CreateMessage())
+                using (var message2 = Session.CreateMessage())
                 {
                     message.ReplyTo = destination;
                     message.CorrelationId = correlationId;
                     message2.BinaryAttachment = buffer;
                     message2.ApplicationMessageType = applicationMessageType;
 
-                    session.SendReply(message, message2).EnsureSuccess();
+                    Session.SendReply(message, message2)
+                        .EnsureSuccess("Failed to connect reply session", Session.Properties);
                 }
         }
 
@@ -68,21 +71,21 @@ namespace Solace.Channels
         {
             IMessage result;
 
-            using (var topic = string.IsNullOrEmpty(topicSuffix) ? null : this.CreateTopicWithSuffix(topicSuffix))
-            using (var message = this.session.CreateMessage())
+            using (var topic = string.IsNullOrEmpty(topicSuffix) ? null : CreateTopicWithSuffix(topicSuffix))
+            using (var message = Session.CreateMessage())
             {
-                message.SenderId = (senderId ?? session.Properties.ClientName);
-                message.Destination = (topic ?? this.topic);
+                message.SenderId = senderId ?? Session.Properties.ClientName;
+                message.Destination = topic ?? this.Topic;
                 message.BinaryAttachment = buffer;
                 message.ApplicationMessageType = applicationMessageType;
                 int num = (int)timeout.TotalMilliseconds;
 
                 lock (sendRequestLock)
-                    session.SendRequest(
+                    Session.SendRequest(
                         message,
                         out result,
                         (num == 0 || num == -1) ? 3600000 : num)
-                        .EnsureSuccess();
+                        .EnsureSuccess($"Failed to send request to {message.Destination}", Session.Properties);
             }
 
             return result;
@@ -92,10 +95,10 @@ namespace Solace.Channels
             string senderId, string topicSuffix)
         {
             using (var topic = string.IsNullOrEmpty(topicSuffix) ? null : CreateTopicWithSuffix(topicSuffix))
-            using (var message = session.CreateMessage())
+            using (var message = Session.CreateMessage())
             {
-                message.SenderId = senderId ?? session.Properties.ClientName;
-                message.Destination = (topic ?? this.topic);
+                message.SenderId = senderId ?? Session.Properties.ClientName;
+                message.Destination = topic ?? this.Topic;
                 message.BinaryAttachment = buffer;
                 message.ApplicationMessageType = applicationMessageType;
 
@@ -103,7 +106,7 @@ namespace Solace.Channels
                     message.CorrelationId = correlationId;
 
                 lock (sendRequestLock)
-                    session.Send(message).EnsureSuccess();
+                    Session.Send(message).EnsureSuccess($"Failed to send message to {message.Destination}", Session.Properties);
             }
         }
 

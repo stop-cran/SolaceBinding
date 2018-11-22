@@ -8,16 +8,16 @@ namespace Solace.Channels
     /// A generic base class for IAsyncResult implementations
     /// that wraps a ManualResetEvent.
     /// </summary>
-    abstract class AsyncResult : IAsyncResult
+    internal abstract class AsyncResult : IAsyncResult
     {
-        AsyncCallback callback;
-        object state;
-        bool completedSynchronously;
-        bool endCalled;
-        Exception exception;
-        bool isCompleted;
-        ManualResetEvent manualResetEvent;
-        object thisLock;
+        private AsyncCallback callback;
+        private object state;
+        private bool completedSynchronously;
+        private bool endCalled;
+        private Exception exception;
+        private bool isCompleted;
+        private ManualResetEvent manualResetEvent;
+        private object thisLock;
 
         protected AsyncResult(AsyncCallback callback, object state)
         {
@@ -71,7 +71,7 @@ namespace Solace.Channels
             }
         }
 
-        object ThisLock
+        private object ThisLock
         {
             get
             {
@@ -169,7 +169,7 @@ namespace Solace.Channels
     }
 
     //An AsyncResult that completes as soon as it is instantiated.
-    class CompletedAsyncResult : AsyncResult
+    internal class CompletedAsyncResult : AsyncResult
     {
         public CompletedAsyncResult(AsyncCallback callback, object state)
             : base(callback, state)
@@ -184,9 +184,9 @@ namespace Solace.Channels
     }
 
     //A strongly typed AsyncResult
-    abstract class TypedAsyncResult<T> : AsyncResult
+    internal abstract class TypedAsyncResult<T> : AsyncResult
     {
-        T data;
+        private T data;
 
         protected TypedAsyncResult(AsyncCallback callback, object state)
             : base(callback, state)
@@ -212,7 +212,7 @@ namespace Solace.Channels
     }
 
     //A strongly typed AsyncResult that completes as soon as it is instantiated.
-    class TypedCompletedAsyncResult<T> : TypedAsyncResult<T>
+    internal class TypedCompletedAsyncResult<T> : TypedAsyncResult<T>
     {
         public TypedCompletedAsyncResult(T data, AsyncCallback callback, object state)
             : base(callback, state)

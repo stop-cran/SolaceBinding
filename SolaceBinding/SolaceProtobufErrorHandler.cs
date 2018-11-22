@@ -1,30 +1,23 @@
-﻿using System;
+﻿using ProtoBuf;
+using System;
 using System.IO;
-using ProtoBuf;
 
 namespace Solace.Channels
 {
-    class SolaceProtobufErrorHandler : SolaceErrorHandler
+    internal class SolaceProtobufErrorHandler : SolaceErrorHandler
     {
-        public override bool HandleError(Exception error)
-        {
-            return true;
-        }
+        public override bool HandleError(Exception error) => true;
 
-        static Error ToErrorObject(Exception ex)
-        {
-            return ex == null ? null : new Error
+        private static Error ToErrorObject(Exception ex) =>
+            ex == null ? null : new Error
             {
                 type = ex.GetType().FullName,
                 message = ex.Message,
                 inner = ToErrorObject(ex.InnerException)
             };
-        }
 
-        protected override void WriteException(Exception error, Stream stream, string action)
-        {
+        protected override void WriteException(Exception error, Stream stream, string action) =>
             Serializer.Serialize(stream, ToErrorObject(error));
-        }
     }
 
 

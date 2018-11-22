@@ -7,13 +7,8 @@ namespace Solace.Channels
 {
     public class SolaceBindingExtensionElement : BindingElementExtensionElement
     {
-        public override Type BindingElementType
-        {
-            get
-            {
-                return typeof(SolaceTransportBindingElement);
-            }
-        }
+        public override Type BindingElementType =>
+            typeof(SolaceTransportBindingElement);
 
         protected override BindingElement CreateBindingElement()
         {

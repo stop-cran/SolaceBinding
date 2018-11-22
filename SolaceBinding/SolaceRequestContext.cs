@@ -1,22 +1,21 @@
-﻿using System;
+﻿using SolaceSystems.Solclient.Messaging;
+using System;
 using System.ServiceModel.Channels;
 using System.Threading.Tasks;
-using SolaceSystems.Solclient.Messaging;
 
 namespace Solace.Channels
 {
-    class SolaceRequestContext : RequestContext
+    internal class SolaceRequestContext : RequestContext
     {
-        SolaceReplyChannel replyChannel;
-        Message requestMessage;
-        IDestination replyTo;
-        string correlationId;
-        TimeSpan timeout;
+        private readonly SolaceReplyChannel replyChannel;
+        private readonly IDestination replyTo;
+        private readonly string correlationId;
+        private readonly TimeSpan timeout;
 
         public SolaceRequestContext(SolaceReplyChannel replyChannel, Message requestMessage, TimeSpan timeout)
         {
             this.replyChannel = replyChannel;
-            this.requestMessage = requestMessage;
+            RequestMessage = requestMessage;
             this.timeout = timeout;
 
             replyTo = (IDestination)requestMessage.Properties.TryGetValue(SolaceConstants.ReplyToKey);
@@ -25,51 +24,35 @@ namespace Solace.Channels
                 correlationId = (string)requestMessage.Properties[SolaceConstants.CorrelationIdKey];
         }
 
-        public override void Abort()
-        {
-            this.replyChannel.Abort();
-        }
+        public override void Abort() => replyChannel.Abort();
 
-        public override IAsyncResult BeginReply(Message message, TimeSpan timeout, AsyncCallback callback, object state)
-        {
-            return replyTo == null ? Task.CompletedTask : TaskHelper.CreateTask(() => this.replyChannel.SendReply(replyTo, correlationId, message, timeout), callback, state);
-        }
+        public override IAsyncResult BeginReply(Message message, TimeSpan timeout, AsyncCallback callback, object state) =>
+            BeginReply(message, callback, state);
 
-        public override IAsyncResult BeginReply(Message message, AsyncCallback callback, object state)
-        {
-            return replyTo == null ? Task.CompletedTask : TaskHelper.CreateTask(() => this.replyChannel.SendReply(replyTo, correlationId, message, timeout), callback, state);
-        }
+        public override IAsyncResult BeginReply(Message message, AsyncCallback callback, object state) =>
+            replyTo == null ? Task.CompletedTask : TaskHelper.CreateTask(() => replyChannel.SendReply(replyTo, correlationId, message, timeout), callback, state);
 
-        public override void Close(TimeSpan timeout)
-        {
-            this.replyChannel.Close(timeout);
-        }
+        public override void Close(TimeSpan timeout) =>
+            replyChannel.Close(timeout);
 
-        public override void Close()
-        {
-            this.replyChannel.Close();
-        }
+        public override void Close() =>
+            replyChannel.Close();
 
-        public override void EndReply(IAsyncResult result)
-        {
+        public override void EndReply(IAsyncResult result) =>
             ((Task)result).Wait();
-        }
 
         public override void Reply(Message message, TimeSpan timeout)
         {
             if (replyTo != null)
-                this.replyChannel.SendReply(replyTo, correlationId, message, timeout);
+                replyChannel.SendReply(replyTo, correlationId, message, timeout);
         }
 
         public override void Reply(Message message)
         {
             if (replyTo != null)
-                this.replyChannel.SendReply(replyTo, correlationId, message, timeout);
+                replyChannel.SendReply(replyTo, correlationId, message, timeout);
         }
 
-        public override Message RequestMessage
-        {
-            get { return this.requestMessage; }
-        }
+        public override Message RequestMessage { get; }
     }
 }

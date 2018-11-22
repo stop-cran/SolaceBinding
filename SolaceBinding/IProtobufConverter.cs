@@ -6,8 +6,11 @@ namespace Solace.Channels
     public interface IProtobufConverter
     {
         byte[] SerializeRequest(object[] parameters);
+
         byte[] SerializeReply(object result);
+
         void DeserializeRequest(byte[] binary, object[] parametersToSet);
+
         object DeserializeReply(byte[] binary);
     }
 
@@ -24,13 +27,15 @@ namespace Solace.Channels
         }
 
         public abstract void DeserializeRequest(byte[] binary, object[] parametersToSet);
+
         public abstract byte[] SerializeReply(object result);
+
         public abstract object DeserializeReply(byte[] binary);
 
         protected abstract object ToObject(object[] parameters);
+
         protected abstract void FromObject(object value, object[] parametersToSet);
     }
-
 
     public abstract class ProtobufConverterBase<TParameters> : ProtobufConverterBase
     {
@@ -53,7 +58,6 @@ namespace Solace.Channels
             return null;
         }
     }
-
 
     public abstract class ProtobufConverterBase<TParameters, TResult> : ProtobufConverterBase
     {

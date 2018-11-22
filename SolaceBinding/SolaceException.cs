@@ -1,14 +1,18 @@
-﻿using System;
-using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json.Linq;
+using System;
 
 namespace Solace.Channels
 {
     public class SolaceException : Exception
     {
-        public SolaceException(string message) : base(message) { }
-        public SolaceException(string message, Exception innerException) : base(message, innerException) { }
-    }
+        public SolaceException(string message) : base(message)
+        {
+        }
 
+        public SolaceException(string message, Exception innerException) : base(message, innerException)
+        {
+        }
+    }
 
     public class SolaceJsonException : SolaceException
     {

@@ -1,6 +1,6 @@
-﻿using System;
+﻿using SolaceSystems.Solclient.Messaging;
+using System;
 using System.Threading;
-using SolaceSystems.Solclient.Messaging;
 
 namespace Solace.Channels
 {
@@ -12,7 +12,7 @@ namespace Solace.Channels
         public SolaceReplyEndpoint(Uri address, ISession session, IMessage message, Action<ISession> reuseSession) : base(address)
         {
             this.message = message;
-            base.session = session;
+            Session = session;
             this.reuseSession = reuseSession;
         }
 
@@ -39,8 +39,8 @@ namespace Solace.Channels
         public override void Close(int timeout)
         {
             base.Close(timeout);
-            reuseSession(session);
-            session = null;
+            reuseSession(Session);
+            Session = null;
         }
     }
 }

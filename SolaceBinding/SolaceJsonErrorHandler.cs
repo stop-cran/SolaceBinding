@@ -1,17 +1,17 @@
-﻿using System;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
+using System;
 using System.IO;
 
 namespace Solace.Channels
 {
-    class SolaceJsonErrorHandler : SolaceErrorHandler
+    internal class SolaceJsonErrorHandler : SolaceErrorHandler
     {
         public override bool HandleError(Exception error)
         {
             return !(error is SolaceJsonException);
         }
 
-        static void WriteException(Exception ex, JsonTextWriter writer)
+        private static void WriteException(Exception ex, JsonTextWriter writer)
         {
             writer.WriteStartObject();
             writer.WritePropertyName("type");

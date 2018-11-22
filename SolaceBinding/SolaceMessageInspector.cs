@@ -1,10 +1,10 @@
-﻿using System.ServiceModel.Dispatcher;
+﻿using System.ServiceModel;
 using System.ServiceModel.Channels;
-using System.ServiceModel;
+using System.ServiceModel.Dispatcher;
 
 namespace Solace.Channels
 {
-    class SolaceMessageInspector : IClientMessageInspector, IDispatchMessageInspector
+    internal class SolaceMessageInspector : IClientMessageInspector, IDispatchMessageInspector
     {
         public void AfterReceiveReply(ref Message reply, object correlationState)
         {
@@ -13,15 +13,11 @@ namespace Solace.Channels
                 throw new SolaceException("Reply does not correspond to the request - correlation id mismatch!");
         }
 
-        public object BeforeSendRequest(ref Message request, IClientChannel channel)
-        {
-            return request.Properties[SolaceConstants.CorrelationIdKey];
-        }
+        public object BeforeSendRequest(ref Message request, IClientChannel channel) =>
+            request.Properties[SolaceConstants.CorrelationIdKey];
 
-        public object AfterReceiveRequest(ref Message request, IClientChannel channel, InstanceContext instanceContext)
-        {
-            return request.Properties.TryGetValue(SolaceConstants.CorrelationIdKey);
-        }
+        public object AfterReceiveRequest(ref Message request, IClientChannel channel, InstanceContext instanceContext) =>
+            request.Properties.TryGetValue(SolaceConstants.CorrelationIdKey);
 
         public void BeforeSendReply(ref Message reply, object correlationState)
         {

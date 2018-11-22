@@ -10,9 +10,10 @@ namespace Solace.Channels
 {
     public class ProtobufConverterFactory : IProtobufConverterFactory
     {
-        static readonly Dictionary<Tuple<IEnumerable<RequestParameter>, Type>, Type> cache =
+        private static readonly Dictionary<Tuple<IEnumerable<RequestParameter>, Type>, Type> cache =
             new Dictionary<Tuple<IEnumerable<RequestParameter>, Type>, Type>(new OperationEqualityComparer());
-        readonly IReadOnlyList<IValueConverter> converters;
+
+        private readonly IReadOnlyList<IValueConverter> converters;
 
         public ProtobufConverterFactory(IEnumerable<IValueConverter> converters)
         {
@@ -79,17 +80,16 @@ namespace Solace.Channels
             }
         }
 
-        static string CreateRandomConverterName()
+        private static string CreateRandomConverterName()
         {
             var r = new Random();
 
             return new string(Enumerable.Range(0, 10)
                 .Select(i => (char)('a' + r.Next(25)))
                 .ToArray());
-
         }
 
-        static IEnumerable<Type> GetReferencedTypes(Type t)
+        private static IEnumerable<Type> GetReferencedTypes(Type t)
         {
             if (t.IsGenericType)
                 foreach (var type in from argument in t.GetGenericArguments()

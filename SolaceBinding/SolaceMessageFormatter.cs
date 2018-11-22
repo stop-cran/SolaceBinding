@@ -1,24 +1,24 @@
-﻿using System.ServiceModel.Channels;
-using System.ServiceModel.Description;
-using System.ServiceModel.Dispatcher;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.ServiceModel;
 using System.Collections.ObjectModel;
 using System.IO;
-using Newtonsoft.Json.Linq;
+using System.Linq;
+using System.ServiceModel;
+using System.ServiceModel.Channels;
+using System.ServiceModel.Description;
+using System.ServiceModel.Dispatcher;
 
 namespace Solace.Channels
 {
-    class SolaceMessageFormatter : IClientMessageFormatter, IDispatchMessageFormatter
+    internal class SolaceMessageFormatter : IClientMessageFormatter, IDispatchMessageFormatter
     {
-        readonly string applicationMessageType;
-        readonly string replyApplicationMessageType;
-        readonly ReadOnlyCollection<RequestParameter> operationParameters;
-        readonly Type returnType;
-        readonly Func<JsonSerializerSettings> settingsProvider;
+        private readonly string applicationMessageType;
+        private readonly string replyApplicationMessageType;
+        private readonly ReadOnlyCollection<RequestParameter> operationParameters;
+        private readonly Type returnType;
+        private readonly Func<JsonSerializerSettings> settingsProvider;
 
         public SolaceMessageFormatter(OperationDescription operation, Func<JsonSerializerSettings> settingsProvider)
         {
@@ -114,11 +114,8 @@ namespace Solace.Channels
             }
         }
 
-        static JsonTextReader GetJsonReaderAtMessageBody(Message message)
-        {
-            object reader;
-
-            return message.Properties.TryGetValue(SolaceConstants.ReplyReaderKey, out reader)
+        private static JsonTextReader GetJsonReaderAtMessageBody(Message message) =>
+            message.Properties.TryGetValue(SolaceConstants.ReplyReaderKey, out object reader)
                 ? (JsonTextReader)reader
                 : new JsonTextReader(
                     new StreamReader(
@@ -126,18 +123,14 @@ namespace Solace.Channels
                 {
                     CloseInput = true
                 };
-        }
 
         public void DeserializeRequest(Message message, object[] parameters)
         {
             foreach (var part in operationParameters.Where(p => p.IsFromProperty))
-            {
-                object property;
-                if (message.Properties.TryGetValue(part.Name, out property))
+                if (message.Properties.TryGetValue(part.Name, out object property))
                     parameters[part.Index] = property;
                 else
                     throw new ArgumentException("Required parameter was not provided.", part.Name);
-            }
 
             var filledParts = new bool[operationParameters.Count];
 
@@ -157,7 +150,7 @@ namespace Solace.Channels
                     {
                         reader.Read();
 
-                        switch(reader.TokenType)
+                        switch (reader.TokenType)
                         {
                             case JsonToken.StartArray:
                             case JsonToken.StartObject:
@@ -179,7 +172,7 @@ namespace Solace.Channels
                         if (!reader.Read())
                             throw new JsonReaderException("Error reading the request");
 
-                        if (v == null && part.IsRequired)
+                        if (v == null && part.IsRequired)
                             throw new ArgumentException("Required parameter was not provided.", part.Name);
 
                         parameters[part.Index] = v;
@@ -203,7 +196,7 @@ namespace Solace.Channels
                 throw new ArgumentException("Required parameter was not provided.", notFilled.Name);
         }
 
-        byte[] Serialize(object value)
+        private byte[] Serialize(object value)
         {
             using (var stream = new MemoryStream())
             {
