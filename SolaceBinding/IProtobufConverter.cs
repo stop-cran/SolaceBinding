@@ -55,6 +55,7 @@ namespace Solace.Channels
             if (binary.Length > 0)
                 using (var stream = new MemoryStream(binary))
                     throw new SolaceProtobufException(Serializer.Deserialize<Error>(stream));
+
             return null;
         }
     }

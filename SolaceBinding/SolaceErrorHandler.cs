@@ -18,7 +18,7 @@ namespace Solace.Channels
                 using (var stream = new MemoryStream())
                 {
                     WriteException(error, stream,
-                        fault == null ? null : fault.Properties[SolaceConstants.ApplicationMessageTypeKey].ToString());
+                        fault?.Properties[SolaceConstants.ApplicationMessageTypeKey].ToString());
                     message = MessageBinaryHelper.SerializeMessage(stream.ToArray());
                 }
 

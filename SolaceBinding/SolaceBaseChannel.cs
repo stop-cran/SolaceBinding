@@ -232,7 +232,7 @@ namespace Solace.Channels
                 return null;
             else
             {
-                var message = this.encoder.ReadMessage(data.ToBuffer(bufferManager), bufferManager);
+                var message = encoder.ReadMessage(data.ToBuffer(bufferManager), bufferManager);
 
                 message.Properties[SolaceConstants.ApplicationMessageTypeKey] = data.ApplicationMessageType;
                 message.Properties[SolaceConstants.CorrelationIdKey] = data.CorrelationId;
