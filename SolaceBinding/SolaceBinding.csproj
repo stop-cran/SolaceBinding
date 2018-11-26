@@ -6,7 +6,7 @@
     <ApplicationIcon />
     <StartupObject />
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>1.5.1</Version>
+    <Version>1.5.2</Version>
     <Authors>stop-cran &lt;stop-cran@list.ru&gt;</Authors>
     <Description>Allows to use WCF over Solace messaging platform with JSON and protobuf message formats.</Description>
     <Copyright>Copyright © stop-cran, 2016-2018</Copyright>
