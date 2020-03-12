@@ -6,25 +6,33 @@
     <ApplicationIcon />
     <StartupObject />
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>1.5.2</Version>
+    <Version>1.5.3</Version>
     <Authors>stop-cran &lt;stop-cran@list.ru&gt;</Authors>
     <Description>Allows to use WCF over Solace messaging platform with JSON and protobuf message formats.</Description>
-    <Copyright>Copyright © stop-cran, 2016-2018</Copyright>
+    <Copyright>Copyright © stop-cran, 2016-2020</Copyright>
     <PackageProjectUrl>https://github.com/stop-cran/SolaceBinding</PackageProjectUrl>
     <RepositoryUrl>https://github.com/stop-cran/SolaceBinding</RepositoryUrl>
     <PackageTags>WCF Solace Messaging</PackageTags>
     <PackageReleaseNotes>Added ClientNameSuffix, better diagnostics, code cleanup.</PackageReleaseNotes>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
-    <PackageReference Include="protobuf-net" Version="2.4.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+    <PackageReference Include="protobuf-net" Version="2.4.4" />
     <PackageReference Include="SolaceBinding.Attributes" Version="1.0.2" />
-    <PackageReference Include="SolaceSystems.Solclient.Messaging" Version="10.2.1" />
+    <PackageReference Include="SolaceSystems.Solclient.Messaging" Version="10.8.0" />
   </ItemGroup>
 
   <ItemGroup>
     <Reference Include="System.ServiceModel.Channels" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\LICENSE">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
   </ItemGroup>
 
 </Project>

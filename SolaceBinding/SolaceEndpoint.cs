@@ -54,6 +54,8 @@ namespace Solace.Channels
                 Password = password,
                 ReconnectRetries = -1,
                 ReconnectRetriesWaitInMsecs = 10000,
+                ConnectRetries = -1,
+                ConnectTimeoutInMsecs = 10000,
                 ReapplySubscriptions = true,
                 ClientName = clientNameFormat == null ? null : string.Format(clientNameFormat, Interlocked.Increment(ref sessionNumber))
             }, messageEvent, sessionEvent);
